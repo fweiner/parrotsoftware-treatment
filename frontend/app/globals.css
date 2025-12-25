@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
+/* Custom CSS Variables for Accessibility */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Blue color scheme for elderly users */
+  --color-primary: #2563eb;      /* blue-600 */
+  --color-primary-hover: #1d4ed8; /* blue-700 */
+  --color-secondary: #60a5fa;    /* blue-400 */
+  --color-accent: #0ea5e9;       /* sky-500 */
+  --color-background: #f8fafc;   /* slate-50 */
+  --color-surface: #ffffff;
+  --color-text: #0f172a;         /* slate-900 */
+  --color-text-muted: #475569;   /* slate-600 */
+  --color-border: #e2e8f0;       /* slate-200 */
+  --color-error: #dc2626;        /* red-600 */
+  --color-success: #16a34a;      /* green-600 */
+
+  /* Larger base font for elderly users */
+  --font-size-base: 1.125rem;    /* 18px */
+  --font-size-lg: 1.25rem;       /* 20px */
+  --font-size-xl: 1.5rem;        /* 24px */
+  --font-size-2xl: 1.875rem;     /* 30px */
+  --font-size-3xl: 2.25rem;      /* 36px */
+
+  /* Spacing for touch targets */
+  --touch-target-min: 44px;
+
+  /* High contrast borders and outlines */
+  --focus-ring-width: 3px;
+  --focus-ring-color: var(--color-primary);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base typography - larger for accessibility */
+html {
+  font-size: 18px;
+  line-height: 1.6;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings */
+h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 0.875rem;
+  color: var(--color-text);
+}
+
+h3 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+  color: var(--color-text);
+}
+
+/* High contrast focus indicators for all interactive elements */
+*:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  z-index: 100;
+  border-radius: 0.25rem;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-text: #000000;
+    --color-background: #ffffff;
+    --color-border: #000000;
+  }
 }

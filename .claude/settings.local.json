@@ -12,7 +12,13 @@
       "Bash(powershell -c \"irm https://astral.sh/uv/install.ps1 | iex\")",
       "Bash(C:Usersweine.localbinuv.exe init --name parrotsoftware-treatment-api --no-readme --app)",
       "Bash(/c/Users/weine/.local/bin/uv.exe add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial implementation: Core backend and infrastructure complete\n\n## Features Implemented\n\n### Backend \\(100%\\)\n- FastAPI application with complete API\n- Google Cloud Speech-to-Text & Text-to-Speech integration\n- Supabase database client with REST API\n- JWT authentication and authorization\n- Treatment session management\n- Results and progress tracking\n- All API endpoints functional\n\n### Database \\(100%\\)\n- Complete schema with migrations\n- Row Level Security policies\n- Automatic profile creation trigger\n- Progress aggregation system\n\n### Infrastructure \\(100%\\)\n- Docker configuration for both services\n- GitHub Actions CI/CD pipeline\n- VSCode debugging setup\n- Comprehensive documentation \\(6 setup guides\\)\n\n### Documentation \\(100%\\)\n- 6 detailed setup guides\n- Technical documentation \\(claude.md\\)\n- README with quick start\n- Implementation status tracking\n\n### Frontend \\(40%\\)\n- Next.js initialization\n- Supabase client configured\n- Structure defined\n\n## Tech Stack\n- Backend: FastAPI, Python 3.12, uv\n- Frontend: Next.js 14+, React, TypeScript\n- Database: Supabase PostgreSQL\n- Speech: Google Cloud Speech APIs\n- AI: OpenAI GPT-4o-mini\n- Email: Resend\n- Hosting: Google Cloud Run\n\n## Next Steps\n- Complete frontend pages \\(auth, dashboard, treatments\\)\n- Follow setup guides to configure external services\n- Deploy to production via GitHub release\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(cat:*)",
+      "Bash(C:/Users/weine/.local/bin/uv.exe add:*)",
+      "Bash(gcloud:*)",
+      "Bash(powershell:*)"
     ]
   }
 }
