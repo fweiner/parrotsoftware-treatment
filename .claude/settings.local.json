@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(supabase --version:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git config:*)",
+      "Bash(whois:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(powershell -c \"irm https://astral.sh/uv/install.ps1 | iex\")",
+      "Bash(C:Usersweine.localbinuv.exe init --name parrotsoftware-treatment-api --no-readme --app)",
+      "Bash(/c/Users/weine/.local/bin/uv.exe add:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

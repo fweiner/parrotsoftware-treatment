@@ -1,0 +1,44 @@
+"""Main FastAPI application."""
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
+
+# Create FastAPI app
+app = FastAPI(
+    title="Parrot Software Treatment API",
+    description="Backend API for cognitive treatment applications",
+    version="1.0.0",
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {
+        "message": "Parrot Software Treatment API",
+        "version": "1.0.0",
+        "status": "online",
+    }
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint."""
+    return {"status": "healthy"}
+
+
+# Import and include routers
+from app.routers import auth, treatments, results
+
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(treatments.router, prefix="/api/treatments", tags=["treatments"])
+app.include_router(results.router, prefix="/api/results", tags=["results"])
