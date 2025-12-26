@@ -28,7 +28,9 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> List[str]:
         """Get CORS origins as a list."""
-        return [origin.strip() for origin in self.allowed_origins.split(",")]
+        # Support both comma and semicolon separators
+        separator = ";" if ";" in self.allowed_origins else ","
+        return [origin.strip() for origin in self.allowed_origins.split(separator)]
 
     model_config = {
         "env_file": ".env.local",
