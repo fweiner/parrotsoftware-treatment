@@ -79,12 +79,20 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
+          # Build secrets list - only include secrets that exist
+          SECRETS="SUPABASE_URL=production-supabase-url:latest"
+          SECRETS="$SECRETS,SUPABASE_SECRET_KEY=production-supabase-secret-key:latest"
+          SECRETS="$SECRETS,OPENAI_API_KEY=openai-api-key:latest"
+          SECRETS="$SECRETS,RESEND_API_KEY=resend-api-key:latest"
+
           gcloud run deploy treatment-api \
             --image $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-api:latest \
             --platform managed \
             --region $GCP_REGION \
+            --project $GCP_PROJECT_ID \
             --allow-unauthenticated \
-            --set-env-vars="SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SECRET_KEY=${{ secrets.SUPABASE_SECRET_KEY }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},RESEND_API_KEY=${{ secrets.RESEND_API_KEY }},GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID,ENVIRONMENT=production,ALLOWED_ORIGINS=https://treatment-web-898169248822.us-central1.run.app;https://app.parrotsoftware.com" \
+            --set-env-vars="GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID,ENVIRONMENT=production,ALLOWED_ORIGINS=https://treatment-web-898169248822.us-central1.run.app;https://app.parrotsoftware.com" \
+            --set-secrets="$SECRETS" \
             --memory 512Mi \
             --cpu 1 \
             --min-instances 0 \
@@ -106,6 +114,16 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Fetch build secrets from Secret Manager
+        id: secrets
+        run: |
+          SUPABASE_URL=$(gcloud secrets versions access latest --secret="production-supabase-url" --project="$GCP_PROJECT_ID")
+          SUPABASE_ANON_KEY=$(gcloud secrets versions access latest --secret="production-supabase-anon-key" --project="$GCP_PROJECT_ID")
+          echo "::add-mask::$SUPABASE_URL"
+          echo "::add-mask::$SUPABASE_ANON_KEY"
+          echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
+          echo "supabase_anon_key=$SUPABASE_ANON_KEY" >> $GITHUB_OUTPUT
+
       - name: Configure Docker for Artifact Registry
         run: |
           gcloud auth configure-docker us-docker.pkg.dev
@@ -114,8 +132,8 @@ jobs:
         run: |
           docker build -t $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-web:${{ github.ref_name }} \
             -t $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-web:latest \
-            --build-arg NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL=${{ steps.secrets.outputs.supabase_url }} \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ steps.secrets.outputs.supabase_anon_key }} \
             --build-arg NEXT_PUBLIC_API_URL=https://treatment-api-898169248822.us-central1.run.app \
             ./frontend
 
@@ -130,6 +148,7 @@ jobs:
             --image $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-web:latest \
             --platform managed \
             --region $GCP_REGION \
+            --project $GCP_PROJECT_ID \
             --allow-unauthenticated \
             --memory 512Mi \
             --cpu 1 \
