@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir uv
 
 # Copy dependency files
 COPY pyproject.toml ./
+COPY uv.lock ./
 COPY .python-version* ./
 
 # Install dependencies
