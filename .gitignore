@@ -14,7 +14,7 @@ build/
 
 # uv
 .uv/
-uv.lock
+# uv.lock is needed for reproducible builds
 
 # Node
 node_modules/
