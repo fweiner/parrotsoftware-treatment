@@ -7,7 +7,7 @@ on:
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
-  REGISTRY: gcr.io
+  REGISTRY: us-docker.pkg.dev
 
 jobs:
   test-backend:
@@ -62,25 +62,25 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for GCR
+      - name: Configure Docker for Artifact Registry
         run: |
-          gcloud auth configure-docker
+          gcloud auth configure-docker us-docker.pkg.dev
 
       - name: Build Docker image
         run: |
-          docker build -t $REGISTRY/$GCP_PROJECT_ID/treatment-api:${{ github.ref_name }} \
-            -t $REGISTRY/$GCP_PROJECT_ID/treatment-api:latest \
+          docker build -t $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-api:${{ github.ref_name }} \
+            -t $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-api:latest \
             ./backend
 
       - name: Push Docker image
         run: |
-          docker push $REGISTRY/$GCP_PROJECT_ID/treatment-api:${{ github.ref_name }}
-          docker push $REGISTRY/$GCP_PROJECT_ID/treatment-api:latest
+          docker push $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-api:${{ github.ref_name }}
+          docker push $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-api:latest
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy treatment-api \
-            --image $REGISTRY/$GCP_PROJECT_ID/treatment-api:latest \
+            --image $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-api:latest \
             --platform managed \
             --region $GCP_REGION \
             --allow-unauthenticated \
@@ -112,14 +112,14 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for GCR
+      - name: Configure Docker for Artifact Registry
         run: |
-          gcloud auth configure-docker
+          gcloud auth configure-docker us-docker.pkg.dev
 
       - name: Build Docker image
         run: |
-          docker build -t $REGISTRY/$GCP_PROJECT_ID/treatment-web:${{ github.ref_name }} \
-            -t $REGISTRY/$GCP_PROJECT_ID/treatment-web:latest \
+          docker build -t $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-web:${{ github.ref_name }} \
+            -t $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-web:latest \
             --build-arg NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
             --build-arg NEXT_PUBLIC_API_URL=https://api.parrotsoftware.com \
@@ -127,13 +127,13 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push $REGISTRY/$GCP_PROJECT_ID/treatment-web:${{ github.ref_name }}
-          docker push $REGISTRY/$GCP_PROJECT_ID/treatment-web:latest
+          docker push $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-web:${{ github.ref_name }}
+          docker push $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-web:latest
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy treatment-web \
-            --image $REGISTRY/$GCP_PROJECT_ID/treatment-web:latest \
+            --image $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-web:latest \
             --platform managed \
             --region $GCP_REGION \
             --allow-unauthenticated \
