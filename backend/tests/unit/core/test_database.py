@@ -95,8 +95,9 @@ async def test_insert(mocker):
     db = SupabaseClient()
     result = await db.insert("test_table", {"name": "Test"})
 
-    assert result["id"] == "new-id"
-    assert result["name"] == "Test"
+    # insert() returns a list, so access first element
+    assert result[0]["id"] == "new-id"
+    assert result[0]["name"] == "Test"
     mock_client.post.assert_called_once()
 
 

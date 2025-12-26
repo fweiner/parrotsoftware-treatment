@@ -80,7 +80,7 @@ export default function WordFindingSessionPage() {
   }, [])
 
   // Timer countdown - runs when answering OR when in cue system
-  const handleTimeoutRef = useRef<() => Promise<void>>()
+  const handleTimeoutRef = useRef<(() => Promise<void>) | undefined>(undefined)
 
   useEffect(() => {
     handleTimeoutRef.current = handleTimeout
@@ -155,7 +155,7 @@ export default function WordFindingSessionPage() {
 
       // Sort stimuli according to the order in stimuli_ids
       const orderedStimuli = stimuliIds
-        .map(id => allStimuli.find(s => s.id === id))
+        .map((id: number) => allStimuli.find(s => s.id === id))
         .filter(Boolean) as Stimulus[]
 
       setStimuli(orderedStimuli)

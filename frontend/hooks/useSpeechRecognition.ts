@@ -5,10 +5,13 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 // Extend Window interface for Web Speech API
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition
-    webkitSpeechRecognition: typeof SpeechRecognition
+    SpeechRecognition: any
+    webkitSpeechRecognition: any
   }
 }
+
+// Type for SpeechRecognition (browser API)
+type SpeechRecognition = any
 
 interface SpeechRecognitionState {
   isListening: boolean
@@ -92,7 +95,7 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       }))
     }
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       let interimTranscript = ''
       let finalTranscript = ''
 
@@ -121,7 +124,7 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       }
     }
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       console.error('Speech recognition error event:', event.error, event)
       isStartingRef.current = false
 

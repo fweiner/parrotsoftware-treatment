@@ -58,7 +58,16 @@
       "Bash(taskkill /F /PID 14100)",
       "Bash(taskkill //F //PID 14100)",
       "Bash(xargs kill:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(git reset:*)",
+      "Bash(git commit:*)",
+      "Bash(dir:*)",
+      "Bash(\"$USERPROFILE/.local/bin/uv.exe\" run uvicorn app.main:app --reload --port 8001)",
+      "Bash(curl:*)",
+      "Bash(git tag:*)",
+      "Bash(\"$USERPROFILE/.local/bin/uv.exe\" run pytest)",
+      "Bash(\"$USERPROFILE/.local/bin/uv.exe\" run pytest -v)",
+      "Bash(npm run build:*)"
     ]
   }
 }

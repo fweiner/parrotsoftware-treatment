@@ -10,21 +10,24 @@ async def test_verify_token_success(mocker):
     """Test successful token verification."""
     from app.core.auth import verify_token
 
-    # Mock the JWT secret
-    mocker.patch("app.core.auth.get_supabase_jwt_secret", return_value="test-secret")
-
-    # Create a valid token
-    payload = {
-        "sub": "user-123",
+    # Mock httpx client response
+    mock_response = mocker.Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "user-123",
         "email": "test@example.com",
-        "role": "authenticated",
-        "aud": "authenticated",
-        "exp": datetime.utcnow() + timedelta(hours=1)
+        "role": "authenticated"
     }
-    token = jwt.encode(payload, "test-secret", algorithm="HS256")
+
+    mock_client = mocker.AsyncMock()
+    mock_client.get.return_value = mock_response
+    mock_client.__aenter__.return_value = mock_client
+    mock_client.__aexit__.return_value = None
+
+    mocker.patch("httpx.AsyncClient", return_value=mock_client)
 
     # Verify token
-    result = await verify_token(token)
+    result = await verify_token("test-token")
 
     assert result["sub"] == "user-123"
     assert result["email"] == "test@example.com"
@@ -36,23 +39,24 @@ async def test_verify_token_expired(mocker):
     """Test token verification with expired token."""
     from app.core.auth import verify_token
 
-    mocker.patch("app.core.auth.get_supabase_jwt_secret", return_value="test-secret")
+    # Mock httpx client response for expired token
+    mock_response = mocker.Mock()
+    mock_response.status_code = 401
+    mock_response.text = "Token expired"
 
-    # Create an expired token
-    payload = {
-        "sub": "user-123",
-        "email": "test@example.com",
-        "aud": "authenticated",
-        "exp": datetime.utcnow() - timedelta(hours=1)
-    }
-    token = jwt.encode(payload, "test-secret", algorithm="HS256")
+    mock_client = mocker.AsyncMock()
+    mock_client.get.return_value = mock_response
+    mock_client.__aenter__.return_value = mock_client
+    mock_client.__aexit__.return_value = None
+
+    mocker.patch("httpx.AsyncClient", return_value=mock_client)
 
     # Verify token should raise exception
     with pytest.raises(HTTPException) as exc_info:
-        await verify_token(token)
+        await verify_token("expired-token")
 
     assert exc_info.value.status_code == 401
-    assert "expired" in exc_info.value.detail.lower()
+    assert "verification failed" in exc_info.value.detail.lower()
 
 
 @pytest.mark.asyncio
@@ -60,13 +64,17 @@ async def test_verify_token_invalid(mocker):
     """Test token verification with invalid token."""
     from app.core.auth import verify_token
 
-    mocker.patch("app.core.auth.get_supabase_jwt_secret", return_value="test-secret")
+    # Mock httpx client to raise an error for invalid token
+    mock_client = mocker.AsyncMock()
+    mock_client.get.side_effect = Exception("Invalid token format")
+    mock_client.__aenter__.return_value = mock_client
+    mock_client.__aexit__.return_value = None
+
+    mocker.patch("httpx.AsyncClient", return_value=mock_client)
 
     # Invalid token
-    token = "invalid.token.here"
-
     with pytest.raises(HTTPException) as exc_info:
-        await verify_token(token)
+        await verify_token("invalid.token.here")
 
     assert exc_info.value.status_code == 401
     assert "invalid" in exc_info.value.detail.lower()
