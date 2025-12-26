@@ -31,7 +31,7 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.allowed_origins.split(",")]
 
     model_config = {
-        "env_file": ".env",
+        "env_file": ".env.local",
         "case_sensitive": False,
     }
 

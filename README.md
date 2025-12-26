@@ -69,8 +69,8 @@ This application provides 10 mini treatment apps to help users with:
    ```bash
    cd backend
    uv sync
-   cp .env.example .env
-   # Edit .env with your API keys
+   cp .env.local.example .env.local
+   # Edit .env.local with your API keys
    ```
 
 4. **Run Locally**:
@@ -116,7 +116,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 RESEND_API_KEY=your-resend-key
 ```
 
-### Backend (`.env`)
+### Backend (`.env.local`)
 
 ```env
 SUPABASE_URL=https://ciqrtvuxalpnjjsmrmwc.supabase.co
@@ -278,7 +278,7 @@ Monthly costs for low traffic (~1000 users, ~500 sessions/month):
 ### Common Issues
 
 **CORS Errors**:
-- Check `ALLOWED_ORIGINS` in backend `.env`
+- Check `ALLOWED_ORIGINS` in backend `.env.local`
 - Verify frontend `NEXT_PUBLIC_API_URL` is correct
 
 **Authentication Errors**:

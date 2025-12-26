@@ -2,6 +2,29 @@
 
 This document provides comprehensive technical information about the Parrot Software Treatment application for AI assistants like Claude.
 
+## Development Environment
+
+**Operating System**: Windows 11
+
+**Important Notes for AI Assistants**:
+- This project is developed on Windows
+- All PowerShell commands must be provided as **single-line commands**
+- Multi-line PowerShell commands will fail when copy-pasted
+- Use semicolons or proper continuation where needed, but keep commands on one line
+
+**Example**:
+```powershell
+# ✅ CORRECT - Single line
+[Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path", "User") + ";C:\Users\weine\.local\bin", "User")
+
+# ❌ WRONG - Multi-line (will fail when pasted)
+[Environment]::SetEnvironmentVariable(
+    "Path",
+    [Environment]::GetEnvironmentVariable("Path", "User") + ";C:\Users\weine\.local\bin",
+    "User"
+)
+```
+
 ## Project Overview
 
 **Purpose**: A web-based cognitive and memory treatment application for users 65+ years old with cognitive challenges.

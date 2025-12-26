@@ -130,3 +130,19 @@ class SpeechEchoResponse(BaseModel):
     transcribed_text: str
     audio_url: Optional[str] = None  # URL to synthesized audio
     created_at: datetime
+
+
+# Word Finding Schemas
+class WordFindingSessionCreate(BaseModel):
+    """Create word-finding session request."""
+    pass  # No parameters needed, stimuli selected randomly
+
+
+class WordFindingResponse(BaseModel):
+    """Word-finding response submission."""
+    stimulus_id: int
+    is_correct: bool
+    cues_used: int = 0
+    response_time: Optional[float] = None
+    user_answer: Optional[str] = None
+    correct_answer: str

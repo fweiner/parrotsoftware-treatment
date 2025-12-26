@@ -10,33 +10,43 @@ from app.config import settings
 security = HTTPBearer()
 
 
-async def get_supabase_jwt_secret() -> str:
-    """Get Supabase JWT secret from their API."""
-    # For now, use the service key directly
-    # In production, you'd fetch the JWT secret from Supabase
-    return settings.supabase_secret_key
-
-
 async def verify_token(token: str) -> Dict[str, Any]:
-    """Verify Supabase JWT token."""
+    """
+    Verify Supabase JWT token.
+
+    With new Supabase API keys (sb_secret_*), we verify tokens by calling
+    the Supabase Auth API directly as recommended in the documentation.
+    """
     try:
-        # Supabase uses the service key as the JWT secret
-        secret = await get_supabase_jwt_secret()
+        # Verify token with Supabase Auth API
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.supabase_url}/auth/v1/user",
+                headers={
+                    "apikey": settings.supabase_secret_key,
+                    "Authorization": f"Bearer {token}"
+                }
+            )
 
-        # Decode and verify the JWT
-        payload = jwt.decode(
-            token,
-            secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-            options={"verify_exp": True}
-        )
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=401,
+                    detail=f"Token verification failed: {response.text}"
+                )
 
-        return payload
+            user_data = response.json()
 
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.InvalidTokenError as e:
+            # Return payload in expected format
+            return {
+                "sub": user_data.get("id"),
+                "email": user_data.get("email"),
+                "role": user_data.get("role", "authenticated"),
+                "aud": "authenticated"
+            }
+
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=401, detail=f"Token verification error: {str(e)}")
+    except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
 

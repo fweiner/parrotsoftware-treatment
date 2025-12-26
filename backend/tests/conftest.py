@@ -4,9 +4,19 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def client():
-    """Create a test client for the FastAPI app."""
+def app():
+    """Get the FastAPI app instance."""
     from app.main import app
+    #Clear any existing overrides
+    app.dependency_overrides.clear()
+    yield app
+    # Clean up overrides after test
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client(app):
+    """Create a test client for the FastAPI app."""
     return TestClient(app)
 
 
