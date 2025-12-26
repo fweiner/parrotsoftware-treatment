@@ -90,7 +90,7 @@ jobs:
             --set-env-vars "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" \
             --set-env-vars "GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID" \
             --set-env-vars "ENVIRONMENT=production" \
-            --set-env-vars "ALLOWED_ORIGINS=https://app.parrotsoftware.com" \
+            --set-env-vars "ALLOWED_ORIGINS=https://treatment-web-898169248822.us-central1.run.app,https://app.parrotsoftware.com" \
             --memory 512Mi \
             --cpu 1 \
             --min-instances 0 \
@@ -122,7 +122,7 @@ jobs:
             -t $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-web:latest \
             --build-arg NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
-            --build-arg NEXT_PUBLIC_API_URL=https://api.parrotsoftware.com \
+            --build-arg NEXT_PUBLIC_API_URL=https://treatment-api-898169248822.us-central1.run.app \
             ./frontend
 
       - name: Push Docker image
