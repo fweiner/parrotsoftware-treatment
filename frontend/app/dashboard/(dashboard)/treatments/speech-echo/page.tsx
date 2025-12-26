@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export default function SpeechEchoPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
