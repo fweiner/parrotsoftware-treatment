@@ -1,6 +1,14 @@
 """Shared test fixtures and configuration."""
+import os
 import pytest
 from fastapi.testclient import TestClient
+
+# Set up test environment variables before importing the app
+os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
+os.environ.setdefault("SUPABASE_SECRET_KEY", "test-secret-key")
+os.environ.setdefault("OPENAI_API_KEY", "test-openai-key")
+os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "test-project")
+os.environ.setdefault("RESEND_API_KEY", "test-resend-key")
 
 
 @pytest.fixture
