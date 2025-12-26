@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from app.core.dependencies import CurrentUserId, Database
 from app.models.schemas import WordFindingSessionCreate, WordFindingResponse
 import random
+import traceback
 
 router = APIRouter()
 
@@ -19,7 +20,7 @@ async def create_word_finding_session(
         stimuli = await db.query(
             "word_finding_stimuli",
             select="*",
-            order={"column": "id", "ascending": True}
+            order="id.asc"
         )
 
         if not stimuli or len(stimuli) < 10:
@@ -48,6 +49,7 @@ async def create_word_finding_session(
         }
 
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -74,7 +76,7 @@ async def get_word_finding_session(
             "word_finding_responses",
             select="*",
             filters={"session_id": session_id},
-            order={"column": "completed_at", "ascending": True}
+            order="completed_at.asc"
         )
 
         return {
@@ -167,7 +169,7 @@ async def complete_word_finding_session(
             }
         )
 
-        return {"session": updated[0] if updated else None}
+        return {"session": updated}
 
     except HTTPException:
         raise
@@ -182,7 +184,7 @@ async def get_all_stimuli(db: Database) -> List[Dict[str, Any]]:
         stimuli = await db.query(
             "word_finding_stimuli",
             select="*",
-            order={"column": "id", "ascending": True}
+            order="id.asc"
         )
 
         return stimuli or []

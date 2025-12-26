@@ -48,7 +48,7 @@ class SupabaseClient:
         self,
         table: str,
         data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         """Insert a row into table."""
         url = f"{self.url}/rest/v1/{table}"
 
@@ -56,7 +56,7 @@ class SupabaseClient:
             response = await client.post(url, headers=self.headers, json=data)
             response.raise_for_status()
             result = response.json()
-            return result[0] if isinstance(result, list) else result
+            return result if isinstance(result, list) else [result]
 
     async def update(
         self,
