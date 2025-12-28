@@ -422,7 +422,7 @@ export default function WordFindingSessionPage() {
     setIsWaitingForNext(false) // Reset waiting state - show button again
 
     try {
-      await speak(`What is this object?`)
+      await speak(`What do you see in this picture?`)
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }
@@ -525,7 +525,7 @@ export default function WordFindingSessionPage() {
                       try {
                         console.log('First image displayed - attempting to speak prompt')
                         await waitForVoices()
-                        await speak(`What is this object?`)
+                        await speak(`What do you see in this picture?`)
                         hasSpokenFirstPromptRef.current = true
                         setHasSpokenFirstPrompt(true)
                         console.log('Successfully spoke prompt when image displayed')
@@ -560,9 +560,9 @@ export default function WordFindingSessionPage() {
                   // When user clicks to start listening on first image, speak the prompt first
                   if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
                     try {
-                      console.log('First image - speaking "What is this object?"')
+                      console.log('First image - speaking "What do you see in this picture?"')
                       await waitForVoices()
-                      await speak(`What is this object?`)
+                      await speak(`What do you see in this picture?`)
                       hasSpokenFirstPromptRef.current = true
                       setHasSpokenFirstPrompt(true)
                       console.log('Successfully spoke prompt for first image')
