@@ -6,12 +6,8 @@ import { createClient } from '@/lib/supabase'
 import Image from 'next/image'
 import SpeechRecognitionButton from '@/components/word-finding/SpeechRecognitionButton'
 import { PersonalizedCueSystem } from '@/components/life-words/PersonalizedCueSystem'
-import Timer from '@/components/word-finding/Timer'
-import SessionProgress from '@/components/word-finding/SessionProgress'
 import { speak, waitForVoices } from '@/lib/utils/textToSpeech'
 import { getRandomPositiveFeedback } from '@/lib/utils/positiveFeedback'
-
-const TIMER_DURATION = 30 // seconds
 
 interface PersonalContact {
   id: string
@@ -32,18 +28,6 @@ interface Session {
   contact_ids: string[]
   started_at: string
   is_completed: boolean
-}
-
-interface SessionResponse {
-  id: string
-  session_id: string
-  contact_id: string
-  is_correct: boolean
-  cues_used: number
-  response_time: number
-  user_answer: string | null
-  correct_answer: string
-  completed_at: string
 }
 
 // Check if the answer matches the contact name or nickname
@@ -79,8 +63,6 @@ export default function LifeWordsSessionPage() {
   const [currentContact, setCurrentContact] = useState<PersonalContact | null>(null)
   const [cuesUsed, setCuesUsed] = useState(0)
   const [isAnswering, setIsAnswering] = useState(false)
-  const [timer, setTimer] = useState(TIMER_DURATION)
-  const [responses, setResponses] = useState<SessionResponse[]>([])
   const [isCompleted, setIsCompleted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -88,7 +70,6 @@ export default function LifeWordsSessionPage() {
   const [hasSpokenFirstPrompt, setHasSpokenFirstPrompt] = useState(false)
   const [isWaitingForNext, setIsWaitingForNext] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [showEndSessionConfirm, setShowEndSessionConfirm] = useState(false)
 
   const isProcessingAnswerRef = useRef(false)
   const currentContactRef = useRef<PersonalContact | null>(null)
@@ -99,31 +80,6 @@ export default function LifeWordsSessionPage() {
   useEffect(() => {
     initializeSession()
   }, [])
-
-  // Timer countdown
-  const handleTimeoutRef = useRef<(() => Promise<void>) | undefined>(undefined)
-
-  useEffect(() => {
-    handleTimeoutRef.current = handleTimeout
-  }, [cuesUsed, isAnswering, currentContact, session])
-
-  useEffect(() => {
-    const isInCueSystem = !isAnswering && currentContact !== null
-    const shouldRunTimer = (isAnswering || isInCueSystem) && timer > 0 && !isCompleted
-    if (!shouldRunTimer) return
-
-    const interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 1) {
-          handleTimeoutRef.current?.()
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [isAnswering, currentContact, timer, isCompleted])
 
   const initializeSession = async () => {
     try {
@@ -161,7 +117,6 @@ export default function LifeWordsSessionPage() {
       setCurrentContact(firstContact)
       currentContactRef.current = firstContact
       setIsAnswering(true)
-      setTimer(TIMER_DURATION)
 
       hasSpokenFirstPromptRef.current = false
       setHasSpokenFirstPrompt(false)
@@ -192,12 +147,11 @@ export default function LifeWordsSessionPage() {
       if (isCorrect) {
         await handleCorrectAnswer(transcript)
       } else {
-        // Answer is incorrect - trigger cue system
+        // Answer is incorrect - offer a hint
         setIsProcessingAnswer(false)
         isProcessingAnswerRef.current = false
         setCuesUsed(0)
         setIsAnswering(false)
-        setTimer(TIMER_DURATION)
       }
     } catch (err) {
       console.error('Error handling answer:', err)
@@ -214,7 +168,6 @@ export default function LifeWordsSessionPage() {
       return
     }
 
-    setTimer(0)
     setIsAnswering(false)
     setIsWaitingForNext(true)
     setShowSuccess(true)
@@ -234,33 +187,6 @@ export default function LifeWordsSessionPage() {
     }, 2000)
   }
 
-  const handleTimeout = async () => {
-    if (!currentContact || !session) return
-
-    if (isAnswering && cuesUsed === 0) {
-      setCuesUsed(0)
-      setIsAnswering(false)
-      setTimeout(() => {
-        setTimer(TIMER_DURATION)
-      }, 0)
-    } else if (!isAnswering && cuesUsed < 7) {
-      const nextCuesUsed = cuesUsed + 1
-      setCuesUsed(nextCuesUsed)
-      setIsAnswering(false)
-      setTimeout(() => {
-        setTimer(TIMER_DURATION)
-      }, 50)
-    } else {
-      await saveResponse(false, null)
-      try {
-        await speak(`This is ${currentContact.name}`)
-      } catch (speakError: any) {
-        console.warn('Text-to-speech failed:', speakError?.message || speakError)
-      }
-      moveToNext()
-    }
-  }
-
   const handleCueAnswer = async (userAnswer: string, isCorrect: boolean) => {
     if (!currentContact || !session) return
 
@@ -272,10 +198,13 @@ export default function LifeWordsSessionPage() {
       } catch (speakError: any) {
         console.warn('Text-to-speech failed:', speakError?.message || speakError)
       }
-      moveToNext()
+      setShowSuccess(true)
+      setTimeout(() => {
+        setShowSuccess(false)
+        moveToNext()
+      }, 2000)
     } else {
       setCuesUsed((prev) => prev + 1)
-      setTimer(TIMER_DURATION)
     }
   }
 
@@ -290,14 +219,13 @@ export default function LifeWordsSessionPage() {
     const currentCont = currentContactRef.current
     if (!currentCont || !session) return
 
-    const responseTime = TIMER_DURATION - timer
     const actualCuesUsed = cuesUsedOverride !== undefined ? cuesUsedOverride : cuesUsed
 
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession()
       if (!authSession?.access_token) return
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/life-words/sessions/${session.id}/responses`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/life-words/sessions/${session.id}/responses`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authSession.access_token}`,
@@ -307,29 +235,11 @@ export default function LifeWordsSessionPage() {
           contact_id: currentCont.id,
           is_correct: isCorrect,
           cues_used: actualCuesUsed,
-          response_time: responseTime,
+          response_time: 0,
           user_answer: userAnswer,
           correct_answer: currentCont.name,
         })
       })
-
-      if (!response.ok) {
-        console.error('Failed to save response')
-      }
-
-      const newResponse: SessionResponse = {
-        id: '',
-        session_id: session.id,
-        contact_id: currentCont.id,
-        is_correct: isCorrect,
-        cues_used: actualCuesUsed,
-        response_time: responseTime,
-        user_answer: userAnswer,
-        correct_answer: currentCont.name,
-        completed_at: new Date().toISOString(),
-      }
-
-      setResponses((prev) => [...prev, newResponse])
     } catch (error) {
       console.error('Error saving response:', error)
     }
@@ -354,7 +264,6 @@ export default function LifeWordsSessionPage() {
     setCurrentContact(nextContact)
     setCuesUsed(0)
     setIsAnswering(true)
-    setTimer(TIMER_DURATION)
     setIsProcessingAnswer(false)
     setIsWaitingForNext(false)
 
@@ -363,15 +272,6 @@ export default function LifeWordsSessionPage() {
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }
-  }
-
-  const handleEndSessionClick = () => {
-    setShowEndSessionConfirm(true)
-  }
-
-  const handleConfirmEndSession = async () => {
-    setShowEndSessionConfirm(false)
-    await completeSession()
   }
 
   const completeSession = async () => {
@@ -393,10 +293,10 @@ export default function LifeWordsSessionPage() {
     } catch (error) {
       console.error('Error completing session:', error)
     }
+  }
 
-    setTimeout(() => {
-      router.push('/dashboard/treatments/life-words')
-    }, 2000)
+  const handleDone = () => {
+    router.push('/dashboard/treatments/life-words')
   }
 
   if (loading) {
@@ -431,150 +331,124 @@ export default function LifeWordsSessionPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-4xl font-bold text-green-600 mb-4">Session Complete!</h2>
-          <p className="text-xl text-gray-700 mb-4">
-            You got {responses.filter(r => r.is_correct).length} out of {responses.length} correct!
+          <h2 className="text-4xl font-bold text-green-600 mb-4">Great job!</h2>
+          <p className="text-xl text-gray-700 mb-8">
+            You practiced with all your contacts today.
           </p>
-          <p className="text-lg text-gray-500">Returning to Life Words...</p>
+          <button
+            onClick={handleDone}
+            className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-4 px-8 rounded-lg text-xl"
+          >
+            Done
+          </button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <SessionProgress
-          current={currentIndex + 1}
-          total={contacts.length}
-        />
+    <div className="min-h-screen flex flex-col items-center justify-center p-8">
+      {/* Progress indicator - simple dots */}
+      <div className="flex gap-2 mb-8">
+        {contacts.map((_, idx) => (
+          <div
+            key={idx}
+            className={`w-3 h-3 rounded-full transition-colors ${
+              idx < currentIndex
+                ? 'bg-green-500'
+                : idx === currentIndex
+                ? 'bg-[var(--color-primary)]'
+                : 'bg-gray-300'
+            }`}
+          />
+        ))}
+      </div>
 
-        {currentContact && (
-          <>
-            {/* Photo display */}
-            <div className={`relative w-80 h-80 md:w-96 md:h-96 rounded-lg overflow-hidden shadow-lg mb-6 transition-all duration-300 ${showSuccess ? 'ring-8 ring-green-500' : 'border-4 border-gray-200'}`}>
-              <Image
-                src={currentContact.photo_url}
-                alt="Who is this?"
-                fill
-                className="object-cover"
-                onLoad={() => {
-                  if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
-                    setTimeout(async () => {
-                      if (!hasSpokenFirstPromptRef.current) {
-                        try {
-                          await waitForVoices()
-                          await speak(`The person in this picture is...`)
-                          hasSpokenFirstPromptRef.current = true
-                          setHasSpokenFirstPrompt(true)
-                        } catch (error: any) {
-                          console.log('TTS blocked by browser:', error?.message || error)
-                        }
+      {currentContact && (
+        <>
+          {/* Photo display */}
+          <div className={`relative w-80 h-80 md:w-96 md:h-96 rounded-lg overflow-hidden shadow-lg mb-8 transition-all duration-300 ${showSuccess ? 'ring-8 ring-green-500' : 'border-4 border-gray-200'}`}>
+            <Image
+              src={currentContact.photo_url}
+              alt="Who is this?"
+              fill
+              className="object-cover"
+              onLoad={() => {
+                if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
+                  setTimeout(async () => {
+                    if (!hasSpokenFirstPromptRef.current) {
+                      try {
+                        await waitForVoices()
+                        await speak(`The person in this picture is...`)
+                        hasSpokenFirstPromptRef.current = true
+                        setHasSpokenFirstPrompt(true)
+                      } catch (error: any) {
+                        console.log('TTS blocked by browser:', error?.message || error)
                       }
-                    }, 300)
-                  }
-                }}
-              />
-              {showSuccess && (
-                <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
-                  <span className="text-8xl">✓</span>
-                </div>
-              )}
-            </div>
-
-            <Timer seconds={timer} />
-
-            {isWaitingForNext && !isAnswering ? (
-              <div className="text-center mt-6">
-                <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6 max-w-2xl">
-                  <p className="text-2xl text-green-800 font-semibold">Please wait for the next person</p>
-                </div>
-              </div>
-            ) : isAnswering ? (
-              <SpeechRecognitionButton
-                key={`speech-${currentIndex}`}
-                onResult={handleAnswer}
-                disabled={timer === 0 || isProcessingAnswer}
-                resetTrigger={currentIndex}
-                timer={timer}
-                isCorrectAnswer={isProcessingAnswer && timer === 0}
-                autoStart={true}
-                onStartListening={async () => {
-                  if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
-                    try {
-                      await waitForVoices()
-                      await speak(`The person in this picture is...`)
-                      hasSpokenFirstPromptRef.current = true
-                      setHasSpokenFirstPrompt(true)
-                    } catch (error: any) {
-                      console.warn('Failed to speak prompt:', error)
                     }
-                  }
-                }}
-              />
-            ) : (
-              <PersonalizedCueSystem
-                contact={currentContact}
-                cuesUsed={cuesUsed}
-                onAnswer={handleCueAnswer}
-                onFinalAnswer={handleFinalAnswer}
-                onContinue={() => {
-                  setIsAnswering(true)
-                  setTimer(TIMER_DURATION)
-                }}
-              />
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Sidebar with session info */}
-      <div className="lg:w-96 bg-gray-50 p-8 border-l-4 border-gray-200">
-        <h3 className="text-3xl font-bold mb-6 text-gray-900">Session Info</h3>
-        <div className="space-y-4 text-xl">
-          <p><span className="font-bold">Correct:</span> {responses.filter((r) => r.is_correct).length}</p>
-          <p><span className="font-bold">Incorrect:</span> {responses.filter((r) => !r.is_correct).length}</p>
-          <p><span className="font-bold">Average Cues:</span> {responses.length > 0
-            ? (responses.reduce((sum, r) => sum + r.cues_used, 0) / responses.length).toFixed(1)
-            : '0'}</p>
-        </div>
-
-        <div className="mt-8">
-          <button
-            onClick={handleEndSessionClick}
-            className="w-full bg-red-100 hover:bg-red-200 text-red-700 font-bold py-4 px-6 rounded-lg text-lg transition-colors"
-          >
-            End Session Early
-          </button>
-        </div>
-
-        {/* End session confirmation modal */}
-        {showEndSessionConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-md mx-4">
-              <h4 className="text-2xl font-bold text-gray-900 mb-4">End Session?</h4>
-              <p className="text-lg text-gray-700 mb-6">
-                Are you sure you want to end this session? Your progress will be saved.
-              </p>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setShowEndSessionConfirm(false)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-lg text-lg transition-colors"
-                >
-                  Continue
-                </button>
-                <button
-                  onClick={handleConfirmEndSession}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-colors"
-                >
-                  End Session
-                </button>
+                  }, 300)
+                }
+              }}
+            />
+            {showSuccess && (
+              <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+                <span className="text-8xl">✓</span>
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
+
+          {/* Prompt text */}
+          <p className="text-2xl text-gray-700 mb-6 text-center">
+            The person in this picture is...
+          </p>
+
+          {isWaitingForNext && !isAnswering ? (
+            <div className="text-center">
+              <p className="text-xl text-green-700">Moving to next person...</p>
+            </div>
+          ) : isAnswering ? (
+            <SpeechRecognitionButton
+              key={`speech-${currentIndex}`}
+              onResult={handleAnswer}
+              disabled={isProcessingAnswer}
+              resetTrigger={currentIndex}
+              autoStart={true}
+              onStartListening={async () => {
+                if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
+                  try {
+                    await waitForVoices()
+                    await speak(`The person in this picture is...`)
+                    hasSpokenFirstPromptRef.current = true
+                    setHasSpokenFirstPrompt(true)
+                  } catch (error: any) {
+                    console.warn('Failed to speak prompt:', error)
+                  }
+                }
+              }}
+            />
+          ) : (
+            <PersonalizedCueSystem
+              contact={currentContact}
+              cuesUsed={cuesUsed}
+              onAnswer={handleCueAnswer}
+              onFinalAnswer={handleFinalAnswer}
+              onContinue={() => {
+                setIsAnswering(true)
+              }}
+            />
+          )}
+
+          {/* Done button - always visible */}
+          <div className="mt-12">
+            <button
+              onClick={handleDone}
+              className="text-gray-500 hover:text-gray-700 underline text-lg"
+            >
+              Done for now
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

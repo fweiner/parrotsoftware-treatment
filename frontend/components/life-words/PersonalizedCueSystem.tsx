@@ -199,9 +199,6 @@ export function PersonalizedCueSystem({
     const speechOperation = { level: currentCueLevel, cancelled: false }
     currentSpeechRef.current = speechOperation
 
-    let finalAnswerTimeout: NodeJS.Timeout | null = null
-    let timeoutId: NodeJS.Timeout | null = null
-
     const speakCue = async () => {
       if (speechOperation.cancelled || currentSpeechRef.current !== speechOperation) {
         return
@@ -227,31 +224,10 @@ export function PersonalizedCueSystem({
         }
 
         setHasSpoken(true)
-
-        if (currentCueLevel === 7 && !speechOperation.cancelled) {
-          finalAnswerTimeout = setTimeout(() => {
-            if (!finalAnswerCalledRef.current && !speechOperation.cancelled) {
-              finalAnswerCalledRef.current = true
-              handleFinalAnswer()
-            }
-          }, 30000)
-        }
       } catch (error) {
         console.warn(`Failed to speak cue ${currentCueLevel}:`, error)
         if (!speechOperation.cancelled && currentSpeechRef.current === speechOperation) {
           setHasSpoken(true)
-          if (currentCueLevel === 7) {
-            finalAnswerTimeout = setTimeout(() => {
-              if (!finalAnswerCalledRef.current && !speechOperation.cancelled) {
-                finalAnswerCalledRef.current = true
-                handleFinalAnswer()
-              }
-            }, 30000)
-          }
-        }
-      } finally {
-        if (timeoutId && !speechOperation.cancelled) {
-          clearTimeout(timeoutId)
         }
       }
     }
@@ -260,20 +236,11 @@ export function PersonalizedCueSystem({
       if (currentCueLevel > 7 || speechOperation.cancelled) {
         return
       }
-
       speakCue()
-
-      timeoutId = setTimeout(() => {
-        if (!speechOperation.cancelled && currentSpeechRef.current === speechOperation) {
-          setHasSpoken(true)
-        }
-      }, 3000)
     }, 100)
 
     return () => {
       clearTimeout(speakDelay)
-      if (timeoutId) clearTimeout(timeoutId)
-      if (finalAnswerTimeout) clearTimeout(finalAnswerTimeout)
       if (currentSpeechRef.current === speechOperation) {
         speechOperation.cancelled = true
         currentSpeechRef.current = null
@@ -315,10 +282,18 @@ export function PersonalizedCueSystem({
     }
   }
 
+  const handleNeedMoreHelp = () => {
+    if (currentCueLevel < 7) {
+      onAnswer('', false) // Trigger next cue
+    } else {
+      handleFinalAnswer()
+    }
+  }
+
   if (currentCueLevel > 7) {
     return (
       <div className="text-center max-w-2xl">
-        <p className="text-xl mb-6">The correct name has been provided.</p>
+        <p className="text-xl mb-6">The name has been provided.</p>
         <button
           className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2"
           onClick={onContinue}
@@ -336,18 +311,24 @@ export function PersonalizedCueSystem({
   return (
     <div className="text-center w-full max-w-2xl">
       <div className="bg-blue-50 border-4 border-blue-300 rounded-lg p-8 mb-6">
-        <h5 className="text-3xl font-bold text-blue-900 mb-4">
-          Cue {currentCueLevel}: {currentCue.name}
-        </h5>
-        <p className="text-2xl text-blue-800 mb-0">{cueText}</p>
+        <p className="text-sm text-blue-600 mb-2">Hint {currentCueLevel} of 7</p>
+        <p className="text-2xl text-blue-800">{cueText}</p>
       </div>
 
       {hasSpoken && !isShowingFinalAnswer && (
-        <SpeechRecognitionButton
-          onResult={handleAnswer}
-          disabled={false}
-          autoStart={true}
-        />
+        <>
+          <SpeechRecognitionButton
+            onResult={handleAnswer}
+            disabled={false}
+            autoStart={true}
+          />
+          <button
+            onClick={handleNeedMoreHelp}
+            className="mt-4 text-gray-500 hover:text-gray-700 underline text-lg"
+          >
+            I need another hint
+          </button>
+        </>
       )}
 
       {isShowingFinalAnswer && (
