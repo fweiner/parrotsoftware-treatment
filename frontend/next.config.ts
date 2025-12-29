@@ -10,6 +10,17 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+
+  // Allow images from Supabase storage
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
