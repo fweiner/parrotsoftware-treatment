@@ -159,6 +159,11 @@ class PersonalContactCreate(BaseModel):
     description: Optional[str] = None
     association: Optional[str] = None
     location_context: Optional[str] = None
+    # Personal characteristics
+    interests: Optional[str] = None
+    personality: Optional[str] = None
+    values: Optional[str] = None
+    social_behavior: Optional[str] = None
 
 
 class PersonalContactUpdate(BaseModel):
@@ -171,6 +176,11 @@ class PersonalContactUpdate(BaseModel):
     description: Optional[str] = None
     association: Optional[str] = None
     location_context: Optional[str] = None
+    # Personal characteristics
+    interests: Optional[str] = None
+    personality: Optional[str] = None
+    values: Optional[str] = None
+    social_behavior: Optional[str] = None
 
 
 class PersonalContactResponse(BaseModel):
@@ -186,6 +196,11 @@ class PersonalContactResponse(BaseModel):
     description: Optional[str] = None
     association: Optional[str] = None
     location_context: Optional[str] = None
+    # Personal characteristics
+    interests: Optional[str] = None
+    personality: Optional[str] = None
+    values: Optional[str] = None
+    social_behavior: Optional[str] = None
     is_active: bool
     created_at: datetime
     updated_at: datetime

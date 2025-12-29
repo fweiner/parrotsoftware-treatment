@@ -12,6 +12,11 @@ export interface ContactFormData {
   description: string
   association: string
   location_context: string
+  // Personal characteristics
+  interests: string
+  personality: string
+  values: string
+  social_behavior: string
 }
 
 interface ContactFormProps {
@@ -43,6 +48,17 @@ const CATEGORY_OPTIONS = [
   { value: 'object', label: 'Object' },
 ]
 
+const PERSONALITY_OPTIONS = [
+  { value: 'outgoing', label: 'Outgoing' },
+  { value: 'reserved', label: 'Reserved' },
+  { value: 'optimistic', label: 'Optimistic' },
+  { value: 'cautious', label: 'Cautious' },
+  { value: 'friendly', label: 'Friendly' },
+  { value: 'quiet', label: 'Quiet' },
+  { value: 'energetic', label: 'Energetic' },
+  { value: 'calm', label: 'Calm' },
+]
+
 export function ContactForm({
   initialData,
   onSubmit,
@@ -59,6 +75,11 @@ export function ContactForm({
     description: initialData?.description || '',
     association: initialData?.association || '',
     location_context: initialData?.location_context || '',
+    // Personal characteristics
+    interests: initialData?.interests || '',
+    personality: initialData?.personality || '',
+    values: initialData?.values || '',
+    social_behavior: initialData?.social_behavior || '',
   })
   const [error, setError] = useState<string | null>(null)
 
@@ -226,6 +247,83 @@ export function ContactForm({
           placeholder="e.g., Lives with me, Visits on Sundays"
           className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
         />
+      </div>
+
+      {/* Section Divider - Personal Characteristics */}
+      <div className="border-t-2 border-gray-200 pt-6 mt-6">
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Personal Characteristics</h3>
+        <p className="text-gray-600 mb-4">These details can help provide more meaningful hints during practice.</p>
+      </div>
+
+      {/* Interests */}
+      <div>
+        <label htmlFor="interests" className="block text-lg font-semibold text-gray-700 mb-2">
+          What are their interests? (optional)
+        </label>
+        <textarea
+          id="interests"
+          name="interests"
+          value={formData.interests}
+          onChange={handleChange}
+          placeholder="e.g., Gardening, reading mystery novels, watching baseball"
+          rows={2}
+          className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+        />
+        <p className="text-sm text-gray-500 mt-1">Hobbies or activities they enjoy</p>
+      </div>
+
+      {/* Personality */}
+      <div>
+        <label htmlFor="personality" className="block text-lg font-semibold text-gray-700 mb-2">
+          What type of personality do they have? (optional)
+        </label>
+        <select
+          id="personality"
+          name="personality"
+          value={formData.personality}
+          onChange={handleChange}
+          className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+        >
+          <option value="">Select personality type...</option>
+          {PERSONALITY_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <p className="text-sm text-gray-500 mt-1">Their general demeanor</p>
+      </div>
+
+      {/* Values */}
+      <div>
+        <label htmlFor="values" className="block text-lg font-semibold text-gray-700 mb-2">
+          What do they value? (optional)
+        </label>
+        <textarea
+          id="values"
+          name="values"
+          value={formData.values}
+          onChange={handleChange}
+          placeholder="e.g., Family time, helping others, staying active"
+          rows={2}
+          className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+        />
+        <p className="text-sm text-gray-500 mt-1">Things that are important to them</p>
+      </div>
+
+      {/* Social Behavior */}
+      <div>
+        <label htmlFor="social_behavior" className="block text-lg font-semibold text-gray-700 mb-2">
+          How do they behave in social situations? (optional)
+        </label>
+        <textarea
+          id="social_behavior"
+          name="social_behavior"
+          value={formData.social_behavior}
+          onChange={handleChange}
+          placeholder="e.g., Loves to tell jokes, always asks about your day, great listener"
+          rows={2}
+          className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+        />
+        <p className="text-sm text-gray-500 mt-1">How they interact with others</p>
       </div>
 
       {/* Error Message */}

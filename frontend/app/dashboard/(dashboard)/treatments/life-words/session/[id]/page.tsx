@@ -20,6 +20,11 @@ interface PersonalContact {
   description?: string
   association?: string
   location_context?: string
+  // Personal characteristics
+  interests?: string
+  personality?: string
+  values?: string
+  social_behavior?: string
 }
 
 interface Session {

@@ -14,6 +14,11 @@ interface PersonalContact {
   description?: string
   association?: string
   location_context?: string
+  // Personal characteristics
+  interests?: string
+  personality?: string
+  values?: string
+  social_behavior?: string
 }
 
 interface PersonalizedCueSystemProps {
@@ -37,6 +42,17 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
   other: 'someone you know',
 }
 
+const PERSONALITY_LABELS: Record<string, string> = {
+  outgoing: 'outgoing',
+  reserved: 'reserved',
+  optimistic: 'optimistic',
+  cautious: 'cautious',
+  friendly: 'friendly',
+  quiet: 'quiet',
+  energetic: 'energetic',
+  calm: 'calm',
+}
+
 // Generate cue types based on available contact data
 function getCueTypes(contact: PersonalContact) {
   const cues: { level: number; name: string; getText: () => string }[] = []
@@ -55,15 +71,21 @@ function getCueTypes(contact: PersonalContact) {
     getText: () => `This is ${RELATIONSHIP_LABELS[contact.relationship] || contact.relationship}`
   })
 
-  // Level 3: Description (if available)
+  // Level 3: Description or Personality (context about who they are)
   if (contact.description) {
     cues.push({
       level: 3,
       name: 'Description',
       getText: () => contact.description!
     })
+  } else if (contact.personality) {
+    const personality = contact.personality
+    cues.push({
+      level: 3,
+      name: 'Personality',
+      getText: () => `This person is ${PERSONALITY_LABELS[personality] || personality}`
+    })
   } else {
-    // Fallback: more specific relationship hint
     cues.push({
       level: 3,
       name: 'Hint',
@@ -79,12 +101,30 @@ function getCueTypes(contact: PersonalContact) {
     getText: () => `Their name sounds like '${firstTwoLetters}...'`
   })
 
-  // Level 5: Association (if available)
+  // Level 5: Association, Interests, Social Behavior, or Location (meaningful memory cues)
   if (contact.association) {
     cues.push({
       level: 5,
       name: 'Association',
       getText: () => contact.association!
+    })
+  } else if (contact.interests) {
+    cues.push({
+      level: 5,
+      name: 'Interests',
+      getText: () => `This person loves ${contact.interests}`
+    })
+  } else if (contact.social_behavior) {
+    cues.push({
+      level: 5,
+      name: 'Social',
+      getText: () => contact.social_behavior!
+    })
+  } else if (contact.values) {
+    cues.push({
+      level: 5,
+      name: 'Values',
+      getText: () => `This person values ${contact.values}`
     })
   } else if (contact.location_context) {
     cues.push({
