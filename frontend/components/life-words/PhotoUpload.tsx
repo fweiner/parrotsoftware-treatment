@@ -14,6 +14,7 @@ export function PhotoUpload({ onUploadComplete, currentPhotoUrl, className = '' 
   const [preview, setPreview] = useState<string | null>(currentPhotoUrl || null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const compressImage = useCallback(async (file: File): Promise<Blob> => {
@@ -60,10 +61,7 @@ export function PhotoUpload({ onUploadComplete, currentPhotoUrl, className = '' 
     })
   }, [])
 
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  const processFile = useCallback(async (file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file')
@@ -126,17 +124,54 @@ export function PhotoUpload({ onUploadComplete, currentPhotoUrl, className = '' 
     }
   }, [compressImage, currentPhotoUrl, onUploadComplete])
 
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      processFile(file)
+    }
+  }, [processFile])
+
   const handleClick = useCallback(() => {
     fileInputRef.current?.click()
   }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      processFile(file)
+    }
+  }, [processFile])
 
   return (
     <div className={`flex flex-col items-center gap-4 ${className}`}>
       <button
         type="button"
         onClick={handleClick}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         disabled={uploading}
-        className="relative w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`relative w-40 h-40 border-2 border-dashed rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+          isDragging
+            ? 'border-blue-500 bg-blue-50'
+            : 'border-gray-300 hover:border-blue-500'
+        }`}
       >
         {preview ? (
           <Image
@@ -146,7 +181,7 @@ export function PhotoUpload({ onUploadComplete, currentPhotoUrl, className = '' 
             className="object-cover"
           />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+          <div className={`flex flex-col items-center justify-center h-full ${isDragging ? 'text-blue-500' : 'text-gray-500'}`}>
             <svg
               className="w-12 h-12 mb-2"
               fill="none"
@@ -160,7 +195,9 @@ export function PhotoUpload({ onUploadComplete, currentPhotoUrl, className = '' 
                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            <span className="text-sm">Click to upload</span>
+            <span className="text-sm text-center px-2">
+              {isDragging ? 'Drop image here' : 'Click or drag image'}
+            </span>
           </div>
         )}
         {uploading && (

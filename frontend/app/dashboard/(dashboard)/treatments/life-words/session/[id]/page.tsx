@@ -359,7 +359,7 @@ export default function LifeWordsSessionPage() {
     setIsWaitingForNext(false)
 
     try {
-      await speak(`Who do you see in this picture?`)
+      await speak(`The person in this picture is...`)
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }
@@ -465,7 +465,7 @@ export default function LifeWordsSessionPage() {
                       if (!hasSpokenFirstPromptRef.current) {
                         try {
                           await waitForVoices()
-                          await speak(`Who do you see in this picture?`)
+                          await speak(`The person in this picture is...`)
                           hasSpokenFirstPromptRef.current = true
                           setHasSpokenFirstPrompt(true)
                         } catch (error: any) {
@@ -504,7 +504,7 @@ export default function LifeWordsSessionPage() {
                   if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
                     try {
                       await waitForVoices()
-                      await speak(`Who do you see in this picture?`)
+                      await speak(`The person in this picture is...`)
                       hasSpokenFirstPromptRef.current = true
                       setHasSpokenFirstPrompt(true)
                     } catch (error: any) {
