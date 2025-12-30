@@ -69,7 +69,12 @@ async def create_personal_contact(
                 "category": contact_data.category,
                 "description": contact_data.description,
                 "association": contact_data.association,
-                "location_context": contact_data.location_context
+                "location_context": contact_data.location_context,
+                # Personal characteristics
+                "interests": contact_data.interests,
+                "personality": contact_data.personality,
+                "values": contact_data.values,
+                "social_behavior": contact_data.social_behavior
             }
         )
 
