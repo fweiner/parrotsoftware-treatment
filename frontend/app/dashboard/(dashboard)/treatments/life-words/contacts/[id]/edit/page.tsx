@@ -18,6 +18,11 @@ interface ContactData {
   description?: string
   association?: string
   location_context?: string
+  // Personal characteristics
+  interests?: string
+  personality?: string
+  values?: string
+  social_behavior?: string
 }
 
 export default function EditContactPage() {
@@ -172,6 +177,11 @@ export default function EditContactPage() {
               description: contact.description || '',
               association: contact.association || '',
               location_context: contact.location_context || '',
+              // Personal characteristics
+              interests: contact.interests || '',
+              personality: contact.personality || '',
+              values: contact.values || '',
+              social_behavior: contact.social_behavior || '',
             }}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
