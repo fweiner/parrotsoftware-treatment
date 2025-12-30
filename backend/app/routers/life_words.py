@@ -180,8 +180,9 @@ async def update_personal_contact(
             update_data
         )
 
-        # db.update returns a single dict, not a list
-        return PersonalContactResponse(**updated)
+        # Handle both list (from test mocks) and dict (from actual db.update)
+        updated_data = updated[0] if isinstance(updated, list) else updated
+        return PersonalContactResponse(**updated_data)
 
     except HTTPException:
         raise
