@@ -180,7 +180,8 @@ async def update_personal_contact(
             update_data
         )
 
-        return PersonalContactResponse(**updated[0])
+        # db.update returns a single dict, not a list
+        return PersonalContactResponse(**updated)
 
     except HTTPException:
         raise
