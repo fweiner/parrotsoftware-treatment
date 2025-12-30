@@ -1,44 +1,53 @@
 """Profile management endpoints."""
-from fastapi import APIRouter, HTTPException
-from app.core.dependencies import CurrentUserId, Database
+from fastapi import APIRouter
+from app.core.dependencies import CurrentUser, Database
 from app.models.schemas import ProfileUpdate, ProfileResponse
 
 
 router = APIRouter()
 
 
+async def get_or_create_profile(db: Database, user: dict) -> dict:
+    """Get profile, creating it if it doesn't exist."""
+    profiles = await db.query(
+        "profiles",
+        filters={"id": user["id"]}
+    )
+
+    if profiles:
+        return profiles[0]
+
+    # Profile doesn't exist, create it
+    new_profile = await db.insert(
+        "profiles",
+        {
+            "id": user["id"],
+            "email": user["email"],
+            "full_name": None
+        }
+    )
+    return new_profile[0] if isinstance(new_profile, list) else new_profile
+
+
 @router.get("", response_model=ProfileResponse)
 async def get_profile(
-    user_id: CurrentUserId,
+    user: CurrentUser,
     db: Database
 ):
     """Get current user's profile."""
-    profiles = await db.query(
-        "profiles",
-        filters={"id": user_id}
-    )
-
-    if not profiles:
-        raise HTTPException(status_code=404, detail="Profile not found")
-
-    return profiles[0]
+    profile = await get_or_create_profile(db, user)
+    return profile
 
 
 @router.patch("", response_model=ProfileResponse)
 async def update_profile(
-    user_id: CurrentUserId,
+    user: CurrentUser,
     db: Database,
     profile_data: ProfileUpdate
 ):
     """Update current user's profile."""
-    # Get current profile first
-    profiles = await db.query(
-        "profiles",
-        filters={"id": user_id}
-    )
-
-    if not profiles:
-        raise HTTPException(status_code=404, detail="Profile not found")
+    # Get or create profile
+    profile = await get_or_create_profile(db, user)
 
     # Build update data (only include non-None values)
     update_data = {}
@@ -49,12 +58,12 @@ async def update_profile(
 
     if not update_data:
         # No changes, return current profile
-        return profiles[0]
+        return profile
 
     # Update profile
     updated = await db.update(
         "profiles",
-        filters={"id": user_id},
+        filters={"id": user["id"]},
         data=update_data
     )
 
