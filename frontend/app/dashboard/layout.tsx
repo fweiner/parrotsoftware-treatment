@@ -120,6 +120,14 @@ export default function DashboardLayout({
                     📊 My Progress
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/dashboard/settings"
+                    className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                  >
+                    ⚙️ Settings
+                  </Link>
+                </li>
               </ul>
             </nav>
           </aside>
