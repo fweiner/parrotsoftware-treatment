@@ -24,7 +24,7 @@ async def send_invite_email(
     inviter_full_name: str,
     invite_url: str,
     custom_message: Optional[str] = None
-) -> bool:
+) -> tuple[bool, Optional[str]]:
     """Send an invite email to a contact asking them to fill out their information.
 
     Args:
@@ -35,7 +35,7 @@ async def send_invite_email(
         custom_message: Optional custom message from the inviter
 
     Returns:
-        True if email was sent successfully, False otherwise
+        Tuple of (success, error_message). error_message is None if successful.
     """
     inviter_first_name = get_first_name(inviter_full_name)
     recipient_first_name = get_first_name(recipient_name)
@@ -102,16 +102,21 @@ async def send_invite_email(
     """
 
     try:
-        resend.Emails.send({
+        result = resend.Emails.send({
             "from": FROM_EMAIL,
             "to": [recipient_email],
             "subject": subject,
             "html": html_body,
         })
-        return True
+        print(f"Email sent successfully: {result}")
+        return True, None
     except Exception as e:
-        print(f"Failed to send invite email: {e}")
-        return False
+        import traceback
+        error_msg = str(e)
+        print(f"Failed to send invite email: {error_msg}")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Full traceback: {traceback.format_exc()}")
+        return False, error_msg
 
 
 async def send_thank_you_email(

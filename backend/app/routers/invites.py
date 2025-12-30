@@ -91,7 +91,7 @@ async def create_invite(
         )
 
         # Send invite email
-        email_sent = await send_invite_email(
+        email_sent, email_error = await send_invite_email(
             recipient_email=invite_data.recipient_email,
             recipient_name=invite_data.recipient_name,
             inviter_full_name=inviter_name,
@@ -102,9 +102,10 @@ async def create_invite(
         if not email_sent:
             # Delete the invite if email failed
             await db.delete("contact_invites", {"id": invite[0]["id"]})
+            error_detail = f"Failed to send invite email: {email_error}" if email_error else "Failed to send invite email. Please try again."
             raise HTTPException(
                 status_code=500,
-                detail="Failed to send invite email. Please try again."
+                detail=error_detail
             )
 
         return ContactInviteResponse(**invite[0])
