@@ -216,11 +216,12 @@ async def verify_invite(token: str) -> InviteVerifyResponse:
             )
 
         # Get inviter's name
-        profiles_response = await httpx.AsyncClient().get(
-            f"{settings.supabase_url}/rest/v1/profiles",
-            headers=headers,
-            params={"id": f"eq.{invite['user_id']}", "select": "full_name"}
-        )
+        async with httpx.AsyncClient() as profile_client:
+            profiles_response = await profile_client.get(
+                f"{settings.supabase_url}/rest/v1/profiles",
+                headers=headers,
+                params={"id": f"eq.{invite['user_id']}", "select": "full_name"}
+            )
         profiles = profiles_response.json()
         inviter_name = profiles[0]["full_name"] if profiles else None
 
