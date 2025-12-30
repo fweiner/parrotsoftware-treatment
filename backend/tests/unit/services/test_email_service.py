@@ -50,7 +50,9 @@ class TestSendInviteEmail:
             custom_message="Please help me with my recovery!"
         )
 
-        assert result is True
+        success, error = result
+        assert success is True
+        assert error is None
         mock_send.assert_called_once()
 
         # Verify email content
@@ -74,7 +76,9 @@ class TestSendInviteEmail:
             invite_url="https://example.com/invite/token123"
         )
 
-        assert result is True
+        success, error = result
+        assert success is True
+        assert error is None
         mock_send.assert_called_once()
 
     @pytest.mark.asyncio
@@ -90,7 +94,9 @@ class TestSendInviteEmail:
             invite_url="https://example.com/invite/token123"
         )
 
-        assert result is False
+        success, error = result
+        assert success is False
+        assert error == "Email service error"
 
 
 class TestSendThankYouEmail:
