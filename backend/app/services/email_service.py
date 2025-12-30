@@ -8,7 +8,8 @@ from app.config import settings
 resend.api_key = settings.resend_api_key
 
 # Email sender configuration
-FROM_EMAIL = "Life Words <noreply@parrotsoftware.net>"
+# Using Resend's shared domain for testing - change to your verified domain in production
+FROM_EMAIL = "Life Words <onboarding@resend.dev>"
 
 
 def get_first_name(full_name: str) -> str:
