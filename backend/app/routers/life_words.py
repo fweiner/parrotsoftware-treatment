@@ -57,24 +57,28 @@ async def create_personal_contact(
 ) -> PersonalContactResponse:
     """Create a new personal contact."""
     try:
+        # Helper to convert empty strings to None
+        def empty_to_none(val):
+            return None if val == "" else val
+
         # Insert contact (first_letter is auto-derived by DB trigger)
         contact = await db.insert(
             "personal_contacts",
             {
                 "user_id": user_id,
                 "name": contact_data.name,
-                "nickname": contact_data.nickname,
+                "nickname": empty_to_none(contact_data.nickname),
                 "relationship": contact_data.relationship,
                 "photo_url": contact_data.photo_url,
-                "category": contact_data.category,
-                "description": contact_data.description,
-                "association": contact_data.association,
-                "location_context": contact_data.location_context,
+                "category": empty_to_none(contact_data.category),
+                "description": empty_to_none(contact_data.description),
+                "association": empty_to_none(contact_data.association),
+                "location_context": empty_to_none(contact_data.location_context),
                 # Personal characteristics
-                "interests": contact_data.interests,
-                "personality": contact_data.personality,
-                "values": contact_data.values,
-                "social_behavior": contact_data.social_behavior
+                "interests": empty_to_none(contact_data.interests),
+                "personality": empty_to_none(contact_data.personality),
+                "values": empty_to_none(contact_data.values),
+                "social_behavior": empty_to_none(contact_data.social_behavior)
             }
         )
 
@@ -156,8 +160,16 @@ async def update_personal_contact(
         if not existing:
             raise HTTPException(status_code=404, detail="Contact not found")
 
-        # Build update data (only non-None fields)
-        update_data = {k: v for k, v in contact_data.model_dump().items() if v is not None}
+        # Build update data (only non-None and non-empty fields)
+        # Also convert empty strings to None for optional fields
+        update_data = {}
+        for k, v in contact_data.model_dump().items():
+            if v is not None:
+                # Convert empty strings to None for optional text fields
+                if v == "":
+                    update_data[k] = None
+                else:
+                    update_data[k] = v
 
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
