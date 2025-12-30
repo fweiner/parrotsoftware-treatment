@@ -7,6 +7,11 @@ from unittest.mock import patch, MagicMock, AsyncMock
 # Sample test data
 SAMPLE_USER_ID = "test-user-123"
 SAMPLE_INVITER_NAME = "John Doe"
+SAMPLE_USER = {
+    "id": SAMPLE_USER_ID,
+    "email": "test@example.com",
+    "role": "authenticated"
+}
 SAMPLE_INVITE = {
     "id": "invite-123",
     "user_id": SAMPLE_USER_ID,
@@ -51,20 +56,20 @@ def test_create_invite_unauthorized(client):
 
 
 @patch("app.routers.invites.send_invite_email")
-def test_create_invite_success(mock_send_email, app, client, mock_user_id, mock_db):
+def test_create_invite_success(mock_send_email, app, client, mock_db):
     """Test successfully creating an invite."""
-    from app.core.auth import get_current_user_id
+    from app.core.auth import get_current_user
     from app.core.dependencies import get_db
 
     mock_send_email.return_value = True
 
-    async def override_get_current_user_id():
-        return mock_user_id
+    async def override_get_current_user():
+        return SAMPLE_USER
 
     async def override_get_db():
         return mock_db
 
-    app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+    app.dependency_overrides[get_current_user] = override_get_current_user
     app.dependency_overrides[get_db] = override_get_db
 
     mock_db.query.return_value = [SAMPLE_PROFILE]
@@ -87,21 +92,21 @@ def test_create_invite_success(mock_send_email, app, client, mock_user_id, mock_
     assert data["status"] == "pending"
 
 
-def test_create_invite_no_profile_name(app, client, mock_user_id, mock_db):
+def test_create_invite_no_profile_name(app, client, mock_db):
     """Test creating invite when user has no name set."""
-    from app.core.auth import get_current_user_id
+    from app.core.auth import get_current_user
     from app.core.dependencies import get_db
 
-    async def override_get_current_user_id():
-        return mock_user_id
+    async def override_get_current_user():
+        return SAMPLE_USER
 
     async def override_get_db():
         return mock_db
 
-    app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+    app.dependency_overrides[get_current_user] = override_get_current_user
     app.dependency_overrides[get_db] = override_get_db
 
-    mock_db.query.return_value = [{"id": mock_user_id, "full_name": None}]
+    mock_db.query.return_value = [{"id": SAMPLE_USER_ID, "full_name": None}]
 
     response = client.post(
         "/api/life-words/invites",

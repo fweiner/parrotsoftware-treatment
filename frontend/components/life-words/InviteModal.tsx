@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 
 interface InviteModalProps {
@@ -9,14 +9,59 @@ interface InviteModalProps {
   onSuccess?: () => void
 }
 
+function getDefaultMessage(userName: string): string {
+  return `As you are probably aware, ${userName} has suffered a stroke. As part of his treatment we are talking to him about friends, relatives, pets, and objects in his environment. We would appreciate that you click this link that will take you to a page where you can add a photo of yourself and answer a few basic questions. This information will be added to ${userName}'s contact list to help with his rehabilitation.`
+}
+
 export function InviteModal({ isOpen, onClose, onSuccess }: InviteModalProps) {
   const [recipientName, setRecipientName] = useState('')
   const [recipientEmail, setRecipientEmail] = useState('')
   const [customMessage, setCustomMessage] = useState('')
+  const [userName, setUserName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const supabase = createClient()
+
+  // Fetch user's name when modal opens
+  useEffect(() => {
+    if (isOpen && !userName) {
+      fetchUserName()
+    }
+  }, [isOpen])
+
+  // Set default message when userName is loaded
+  useEffect(() => {
+    if (userName && !customMessage) {
+      setCustomMessage(getDefaultMessage(userName))
+    }
+  }, [userName])
+
+  const fetchUserName = async () => {
+    setIsLoadingProfile(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
+
+      if (response.ok) {
+        const profile = await response.json()
+        if (profile.full_name) {
+          setUserName(profile.full_name)
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err)
+    } finally {
+      setIsLoadingProfile(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +83,7 @@ export function InviteModal({ isOpen, onClose, onSuccess }: InviteModalProps) {
         body: JSON.stringify({
           recipient_name: recipientName,
           recipient_email: recipientEmail,
-          custom_message: customMessage || null
+          custom_message: customMessage
         })
       })
 
@@ -55,6 +100,7 @@ export function InviteModal({ isOpen, onClose, onSuccess }: InviteModalProps) {
         setRecipientName('')
         setRecipientEmail('')
         setCustomMessage('')
+        setUserName('')
         setSuccess(false)
         onClose()
       }, 2000)
@@ -70,6 +116,7 @@ export function InviteModal({ isOpen, onClose, onSuccess }: InviteModalProps) {
       setRecipientName('')
       setRecipientEmail('')
       setCustomMessage('')
+      setUserName('')
       setError(null)
       setSuccess(false)
       onClose()
@@ -148,19 +195,20 @@ export function InviteModal({ isOpen, onClose, onSuccess }: InviteModalProps) {
 
                 <div>
                   <label htmlFor="customMessage" className="block text-lg font-semibold text-gray-700 mb-2">
-                    Personal Message (optional)
+                    Personal Message <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     id="customMessage"
                     value={customMessage}
                     onChange={(e) => setCustomMessage(e.target.value)}
-                    placeholder="Add a personal note to your invitation..."
-                    rows={3}
+                    placeholder={isLoadingProfile ? "Loading default message..." : "Add a personal note to your invitation..."}
+                    rows={6}
                     className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
-                    disabled={isLoading}
+                    disabled={isLoading || isLoadingProfile}
+                    required
                   />
                   <p className="text-sm text-gray-500 mt-1">
-                    This message will be included in the email
+                    This message will be included in the email. Feel free to edit it.
                   </p>
                 </div>
 

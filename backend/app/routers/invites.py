@@ -4,7 +4,7 @@ import traceback
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, UploadFile, File
-from app.core.dependencies import CurrentUserId, Database
+from app.core.dependencies import CurrentUser, CurrentUserId, Database
 from app.core.database import db as global_db
 from app.models.schemas import (
     ContactInviteCreate,
@@ -28,30 +28,48 @@ def generate_secure_token() -> str:
     return secrets.token_urlsafe(32)
 
 
+async def get_or_create_profile(db: Database, user: dict) -> dict:
+    """Get profile, creating it if it doesn't exist."""
+    profiles = await db.query(
+        "profiles",
+        filters={"id": user["id"]}
+    )
+
+    if profiles:
+        return profiles[0]
+
+    # Profile doesn't exist, create it
+    new_profile = await db.insert(
+        "profiles",
+        {
+            "id": user["id"],
+            "email": user["email"],
+            "full_name": None
+        }
+    )
+    return new_profile[0] if isinstance(new_profile, list) else new_profile
+
+
 # ============== Authenticated Endpoints ==============
 
 @router.post("/invites")
 async def create_invite(
     invite_data: ContactInviteCreate,
-    user_id: CurrentUserId,
+    user: CurrentUser,
     db: Database
 ) -> ContactInviteResponse:
     """Create and send an invite to a contact."""
     try:
-        # Get the user's profile to get their name
-        profiles = await db.query(
-            "profiles",
-            select="full_name",
-            filters={"id": user_id}
-        )
+        # Get or create the user's profile
+        profile = await get_or_create_profile(db, user)
 
-        if not profiles or not profiles[0].get("full_name"):
+        if not profile.get("full_name"):
             raise HTTPException(
                 status_code=400,
                 detail="Please set your name in your profile before sending invites"
             )
 
-        inviter_name = profiles[0]["full_name"]
+        inviter_name = profile["full_name"]
 
         # Generate secure token
         token = generate_secure_token()
@@ -63,7 +81,7 @@ async def create_invite(
         invite = await db.insert(
             "contact_invites",
             {
-                "user_id": user_id,
+                "user_id": user["id"],
                 "recipient_email": invite_data.recipient_email,
                 "recipient_name": invite_data.recipient_name,
                 "token": token,
