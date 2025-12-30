@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { ContactCard, Contact } from '@/components/life-words/ContactCard'
+import { InviteModal } from '@/components/life-words/InviteModal'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -11,6 +12,7 @@ export default function ContactsListPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -107,13 +109,21 @@ export default function ContactsListPage() {
           </div>
         )}
 
-        {/* Add new contact button */}
-        <Link
-          href="/dashboard/treatments/life-words/contacts/new"
-          className="w-full py-4 px-6 bg-blue-50 hover:bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 font-semibold text-lg transition-colors mb-6 block text-center"
-        >
-          + Add New Contact
-        </Link>
+        {/* Add new contact buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <Link
+            href="/dashboard/treatments/life-words/contacts/new"
+            className="flex-1 py-4 px-6 bg-blue-50 hover:bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 font-semibold text-lg transition-colors block text-center"
+          >
+            + Add New Contact
+          </Link>
+          <button
+            onClick={() => setIsInviteModalOpen(true)}
+            className="flex-1 py-4 px-6 bg-green-50 hover:bg-green-100 border-2 border-dashed border-green-300 rounded-lg text-green-600 font-semibold text-lg transition-colors text-center"
+          >
+            &#x2709; Invite Someone via Email
+          </button>
+        </div>
 
         {/* Contacts grid */}
         {contacts.length > 0 ? (
@@ -134,6 +144,13 @@ export default function ContactsListPage() {
           </div>
         )}
       </div>
+
+      {/* Invite Modal */}
+      <InviteModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        onSuccess={loadContacts}
+      />
     </div>
   )
 }
