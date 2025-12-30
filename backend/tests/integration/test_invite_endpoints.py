@@ -61,7 +61,7 @@ def test_create_invite_success(mock_send_email, app, client, mock_db):
     from app.core.auth import get_current_user
     from app.core.dependencies import get_db
 
-    mock_send_email.return_value = True
+    mock_send_email.return_value = (True, None)
 
     async def override_get_current_user():
         return SAMPLE_USER
