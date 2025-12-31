@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
+import { UnreadBadge } from '@/components/messaging/UnreadBadge'
 
 export const dynamic = 'force-dynamic'
 
@@ -162,13 +163,22 @@ export default function LifeWordsPage() {
               </ul>
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
               <Link
                 href="/dashboard/treatments/life-words/setup"
                 className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2 inline-block text-center"
                 style={{ minHeight: '44px' }}
               >
                 Get Started
+              </Link>
+
+              <Link
+                href="/dashboard/treatments/life-words/messages"
+                className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 inline-flex items-center justify-center gap-2"
+                style={{ minHeight: '44px' }}
+              >
+                Messages
+                <UnreadBadge />
               </Link>
 
               <Link
@@ -237,8 +247,17 @@ export default function LifeWordsPage() {
                 className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:bg-gray-400 text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                 style={{ minHeight: '44px' }}
               >
-                {isStarting ? 'Starting...' : 'Start Practice Session'}
+                {isStarting ? 'Starting...' : 'Start a Conversation'}
               </button>
+
+              <Link
+                href="/dashboard/treatments/life-words/messages"
+                className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 inline-flex items-center justify-center gap-2"
+                style={{ minHeight: '44px' }}
+              >
+                Messages
+                <UnreadBadge />
+              </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/contacts"

@@ -37,7 +37,7 @@ async def health():
 
 
 # Import and include routers
-from app.routers import auth, treatments, results, word_finding, life_words, invites, profile, items
+from app.routers import auth, treatments, results, word_finding, life_words, invites, profile, items, messaging
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(profile.router, prefix="/api/profile", tags=["profile"])
@@ -47,3 +47,4 @@ app.include_router(word_finding.router, prefix="/api/word-finding", tags=["word-
 app.include_router(life_words.router, prefix="/api/life-words", tags=["life-words"])
 app.include_router(invites.router, prefix="/api/life-words", tags=["invites"])
 app.include_router(items.router, prefix="/api/life-words/items", tags=["items"])
+app.include_router(messaging.router, prefix="/api/life-words/messaging", tags=["messaging"])
