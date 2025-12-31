@@ -55,6 +55,35 @@ async def update_profile(
         update_data["full_name"] = profile_data.full_name
     if profile_data.date_of_birth is not None:
         update_data["date_of_birth"] = profile_data.date_of_birth.isoformat()
+    # Personal information fields
+    if profile_data.gender is not None:
+        update_data["gender"] = profile_data.gender
+    if profile_data.height is not None:
+        update_data["height"] = profile_data.height
+    if profile_data.weight is not None:
+        update_data["weight"] = profile_data.weight
+    if profile_data.hair_color is not None:
+        update_data["hair_color"] = profile_data.hair_color
+    if profile_data.eye_color is not None:
+        update_data["eye_color"] = profile_data.eye_color
+    if profile_data.job is not None:
+        update_data["job"] = profile_data.job
+    if profile_data.phone_number is not None:
+        update_data["phone_number"] = profile_data.phone_number
+    if profile_data.address_city is not None:
+        update_data["address_city"] = profile_data.address_city
+    if profile_data.address_state is not None:
+        update_data["address_state"] = profile_data.address_state
+    if profile_data.address_zip is not None:
+        update_data["address_zip"] = profile_data.address_zip
+    if profile_data.marital_status is not None:
+        update_data["marital_status"] = profile_data.marital_status
+    if profile_data.number_of_children is not None:
+        update_data["number_of_children"] = profile_data.number_of_children
+    if profile_data.favorite_food is not None:
+        update_data["favorite_food"] = profile_data.favorite_food
+    if profile_data.favorite_music is not None:
+        update_data["favorite_music"] = profile_data.favorite_music
 
     if not update_data:
         # No changes, return current profile
