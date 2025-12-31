@@ -38,6 +38,21 @@ class ProfileUpdate(BaseModel):
     """Profile update request."""
     full_name: Optional[str] = None
     date_of_birth: Optional[date] = None
+    # Personal information fields
+    gender: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[str] = None
+    hair_color: Optional[str] = None
+    eye_color: Optional[str] = None
+    job: Optional[str] = None
+    phone_number: Optional[str] = None
+    address_city: Optional[str] = None
+    address_state: Optional[str] = None
+    address_zip: Optional[str] = None
+    marital_status: Optional[str] = None
+    number_of_children: Optional[int] = None
+    favorite_food: Optional[str] = None
+    favorite_music: Optional[str] = None
 
 
 class ProfileResponse(BaseModel):
@@ -46,6 +61,21 @@ class ProfileResponse(BaseModel):
     email: str
     full_name: Optional[str] = None
     date_of_birth: Optional[date] = None
+    # Personal information fields
+    gender: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[str] = None
+    hair_color: Optional[str] = None
+    eye_color: Optional[str] = None
+    job: Optional[str] = None
+    phone_number: Optional[str] = None
+    address_city: Optional[str] = None
+    address_state: Optional[str] = None
+    address_zip: Optional[str] = None
+    marital_status: Optional[str] = None
+    number_of_children: Optional[int] = None
+    favorite_food: Optional[str] = None
+    favorite_music: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

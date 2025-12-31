@@ -162,13 +162,21 @@ export default function LifeWordsPage() {
               </ul>
             </div>
 
-            <div className="mt-8 flex gap-4 justify-center">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/dashboard/treatments/life-words/setup"
-                className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2 inline-block"
+                className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2 inline-block text-center"
                 style={{ minHeight: '44px' }}
               >
                 Get Started
+              </Link>
+
+              <Link
+                href="/dashboard/treatments/life-words/my-information"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-block text-center"
+                style={{ minHeight: '44px' }}
+              >
+                My Information
               </Link>
             </div>
           </div>
@@ -214,7 +222,7 @@ export default function LifeWordsPage() {
               </div>
             )}
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
               <button
                 onClick={handleStartSession}
                 disabled={isStarting}
@@ -230,6 +238,14 @@ export default function LifeWordsPage() {
                 style={{ minHeight: '44px' }}
               >
                 Manage Contacts
+              </Link>
+
+              <Link
+                href="/dashboard/treatments/life-words/my-information"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-block text-center"
+                style={{ minHeight: '44px' }}
+              >
+                My Information
               </Link>
             </div>
           </div>
