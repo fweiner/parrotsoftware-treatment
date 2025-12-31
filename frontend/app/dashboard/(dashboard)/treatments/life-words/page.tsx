@@ -178,6 +178,14 @@ export default function LifeWordsPage() {
               >
                 My Information
               </Link>
+
+              <Link
+                href="/dashboard/treatments/life-words/items"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-block text-center"
+                style={{ minHeight: '44px' }}
+              >
+                My Stuff
+              </Link>
             </div>
           </div>
         ) : (
@@ -246,6 +254,14 @@ export default function LifeWordsPage() {
                 style={{ minHeight: '44px' }}
               >
                 My Information
+              </Link>
+
+              <Link
+                href="/dashboard/treatments/life-words/items"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-block text-center"
+                style={{ minHeight: '44px' }}
+              >
+                My Stuff
               </Link>
             </div>
           </div>

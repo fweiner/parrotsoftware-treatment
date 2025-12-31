@@ -1,0 +1,191 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
+import { ItemForm, ItemFormData } from '@/components/life-words/ItemForm'
+import Link from 'next/link'
+
+export const dynamic = 'force-dynamic'
+
+interface ItemData {
+  id: string
+  name: string
+  photo_url: string
+  purpose?: string
+  features?: string
+  category?: string
+  size?: string
+  shape?: string
+  color?: string
+  weight?: string
+  location?: string
+  associated_with?: string
+}
+
+export default function EditItemPage() {
+  const router = useRouter()
+  const params = useParams()
+  const itemId = params.id as string
+
+  const [item, setItem] = useState<ItemData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    loadItem()
+  }, [itemId])
+
+  const loadItem = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        setError('Please log in to continue')
+        setIsLoading(false)
+        return
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/life-words/items/${itemId}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        }
+      })
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Item not found')
+        }
+        throw new Error('Failed to load item')
+      }
+
+      const data = await response.json()
+      setItem(data)
+    } catch (err: any) {
+      setError(err.message || 'An error occurred')
+      console.error('Error loading item:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSubmit = async (formData: ItemFormData) => {
+    setIsSaving(true)
+    setError(null)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Please log in to continue')
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/life-words/items/${itemId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Failed to update item')
+      }
+
+      // Redirect back to items list
+      router.push('/dashboard/treatments/life-words/items')
+    } catch (err: any) {
+      setError(err.message || 'Failed to update item')
+      throw err
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    router.push('/dashboard/treatments/life-words/items')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-xl text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!item) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">❌</div>
+            <p className="text-xl text-gray-600 mb-4">{error || 'Item not found'}</p>
+            <Link
+              href="/dashboard/treatments/life-words/items"
+              className="text-[var(--color-primary)] hover:underline"
+            >
+              ← Back to My Stuff
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Edit Item
+            </h1>
+            <p className="text-lg text-gray-600 mt-1">
+              Update {item.name}'s information.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/treatments/life-words/items"
+            className="text-[var(--color-primary)] hover:underline"
+          >
+            ← Back to My Stuff
+          </Link>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 mb-6">
+            <p className="text-red-700 font-semibold">{error}</p>
+          </div>
+        )}
+
+        <div className="max-w-xl mx-auto">
+          <ItemForm
+            initialData={{
+              name: item.name,
+              photo_url: item.photo_url,
+              purpose: item.purpose || '',
+              features: item.features || '',
+              category: item.category || '',
+              size: item.size || '',
+              shape: item.shape || '',
+              color: item.color || '',
+              weight: item.weight || '',
+              location: item.location || '',
+              associated_with: item.associated_with || '',
+            }}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            submitLabel="Save Changes"
+            isSubmitting={isSaving}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}

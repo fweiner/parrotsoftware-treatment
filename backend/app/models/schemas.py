@@ -327,3 +327,54 @@ class InviteSubmitResponse(BaseModel):
     success: bool
     message: str
     contact_name: Optional[str] = None
+
+
+# Personal Items (My Stuff) Schemas
+class PersonalItemCreate(BaseModel):
+    """Create personal item request."""
+    name: str
+    photo_url: str
+    purpose: Optional[str] = None
+    features: Optional[str] = None
+    category: Optional[str] = None
+    size: Optional[str] = None
+    shape: Optional[str] = None
+    color: Optional[str] = None
+    weight: Optional[str] = None
+    location: Optional[str] = None
+    associated_with: Optional[str] = None
+
+
+class PersonalItemUpdate(BaseModel):
+    """Update personal item request."""
+    name: Optional[str] = None
+    photo_url: Optional[str] = None
+    purpose: Optional[str] = None
+    features: Optional[str] = None
+    category: Optional[str] = None
+    size: Optional[str] = None
+    shape: Optional[str] = None
+    color: Optional[str] = None
+    weight: Optional[str] = None
+    location: Optional[str] = None
+    associated_with: Optional[str] = None
+
+
+class PersonalItemResponse(BaseModel):
+    """Personal item response."""
+    id: str
+    user_id: str
+    name: str
+    photo_url: str
+    purpose: Optional[str] = None
+    features: Optional[str] = None
+    category: Optional[str] = None
+    size: Optional[str] = None
+    shape: Optional[str] = None
+    color: Optional[str] = None
+    weight: Optional[str] = None
+    location: Optional[str] = None
+    associated_with: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
