@@ -617,3 +617,193 @@ def test_upload_public_voice_success(mock_client_class, client):
     assert response.status_code == 200
     assert "url" in response.json()
     assert response.json()["media_type"] == "voice"
+
+
+# ============== Additional Tests for Coverage ==============
+
+def test_mark_messages_read_unauthorized(client):
+    """Test that marking messages read requires authentication."""
+    response = client.put(f"/api/life-words/messaging/conversations/{SAMPLE_CONTACT_ID}/read")
+    assert response.status_code == 401
+
+
+@patch("httpx.AsyncClient")
+def test_mark_messages_read_contact_not_found(mock_client_class, app, client, mock_user_id, mock_db):
+    """Test marking messages read for non-existent contact."""
+    from app.core.auth import get_current_user_id
+    from app.core.dependencies import get_db
+
+    async def override_get_current_user_id():
+        return mock_user_id
+
+    async def override_get_db():
+        return mock_db
+
+    app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+    app.dependency_overrides[get_db] = override_get_db
+
+    mock_db.query.return_value = []
+
+    response = client.put(
+        f"/api/life-words/messaging/conversations/{SAMPLE_CONTACT_ID}/read",
+        headers={"Authorization": "Bearer test-token"}
+    )
+
+    assert response.status_code == 404
+
+
+@patch("httpx.AsyncClient")
+def test_mark_messages_read_success(mock_client_class, app, client, mock_user_id, mock_db):
+    """Test successfully marking messages as read."""
+    from app.core.auth import get_current_user_id
+    from app.core.dependencies import get_db
+
+    mock_async_client = AsyncMock()
+    mock_client_class.return_value.__aenter__.return_value = mock_async_client
+
+    async def override_get_current_user_id():
+        return mock_user_id
+
+    async def override_get_db():
+        return mock_db
+
+    app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+    app.dependency_overrides[get_db] = override_get_db
+
+    mock_db.query.return_value = [SAMPLE_CONTACT]
+    mock_async_client.patch.return_value = MagicMock()
+
+    response = client.put(
+        f"/api/life-words/messaging/conversations/{SAMPLE_CONTACT_ID}/read",
+        headers={"Authorization": "Bearer test-token"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+
+def test_regenerate_token_unauthorized(client):
+    """Test that regenerating token requires authentication."""
+    response = client.post(f"/api/life-words/messaging/conversations/{SAMPLE_CONTACT_ID}/token/regenerate")
+    assert response.status_code == 401
+
+
+def test_regenerate_token_contact_not_found(app, client, mock_user_id, mock_db):
+    """Test regenerating token for non-existent contact."""
+    from app.core.auth import get_current_user_id
+    from app.core.dependencies import get_db
+
+    async def override_get_current_user_id():
+        return mock_user_id
+
+    async def override_get_db():
+        return mock_db
+
+    app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+    app.dependency_overrides[get_db] = override_get_db
+
+    mock_db.query.return_value = []
+
+    response = client.post(
+        f"/api/life-words/messaging/conversations/{SAMPLE_CONTACT_ID}/token/regenerate",
+        headers={"Authorization": "Bearer test-token"}
+    )
+
+    assert response.status_code == 404
+
+
+def test_regenerate_token_success(app, client, mock_user_id, mock_db):
+    """Test successfully regenerating a token."""
+    from app.core.auth import get_current_user_id
+    from app.core.dependencies import get_db
+
+    async def override_get_current_user_id():
+        return mock_user_id
+
+    async def override_get_db():
+        return mock_db
+
+    app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+    app.dependency_overrides[get_db] = override_get_db
+
+    mock_db.query.return_value = [SAMPLE_CONTACT]
+    mock_db.delete.return_value = True
+    new_token = {**SAMPLE_MESSAGING_TOKEN, "token": "new-token-xyz"}
+    mock_db.insert.return_value = [new_token]
+
+    response = client.post(
+        f"/api/life-words/messaging/conversations/{SAMPLE_CONTACT_ID}/token/regenerate",
+        headers={"Authorization": "Bearer test-token"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "token" in data
+    assert "messaging_url" in data
+
+
+def test_upload_public_media_invalid_media_type(client):
+    """Test uploading with invalid media type parameter."""
+    response = client.post(
+        "/api/life-words/messaging/public/upload-media?media_type=video",
+        files={"file": ("test.mp4", b"video data", "video/mp4")}
+    )
+
+    assert response.status_code == 400
+    assert "invalid" in response.json()["detail"].lower()
+
+
+def test_upload_public_voice_invalid_audio_type(client):
+    """Test uploading voice with invalid audio type."""
+    response = client.post(
+        "/api/life-words/messaging/public/upload-media?media_type=voice",
+        files={"file": ("test.txt", b"not audio", "text/plain")}
+    )
+
+    assert response.status_code == 400
+    assert "audio" in response.json()["detail"].lower()
+
+
+def test_authenticated_upload_media_unauthorized(client):
+    """Test that authenticated upload requires authentication."""
+    response = client.post(
+        "/api/life-words/messaging/upload-media?media_type=photo",
+        files={"file": ("test.png", b"image data", "image/png")}
+    )
+
+    assert response.status_code == 401
+
+
+@patch("httpx.AsyncClient")
+def test_authenticated_upload_media_success(mock_client_class, app, client, mock_user_id):
+    """Test authenticated media upload."""
+    from app.core.auth import get_current_user_id
+
+    mock_async_client = AsyncMock()
+    mock_client_class.return_value.__aenter__.return_value = mock_async_client
+
+    async def override_get_current_user_id():
+        return mock_user_id
+
+    app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_async_client.post.return_value = mock_response
+
+    # Create a small valid image (1x1 PNG)
+    png_data = (
+        b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
+        b'\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00'
+        b'\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00'
+        b'\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
+    )
+
+    response = client.post(
+        "/api/life-words/messaging/upload-media?media_type=photo",
+        files={"file": ("test.png", png_data, "image/png")},
+        headers={"Authorization": "Bearer test-token"}
+    )
+
+    assert response.status_code == 200
+    assert "url" in response.json()
