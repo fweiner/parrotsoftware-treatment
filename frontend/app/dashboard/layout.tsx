@@ -108,7 +108,7 @@ export default function DashboardLayout({
                     className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                     
                   >
-                    🧠 Short Term Memory <span className="text-sm">(Coming Soon)</span>
+                    🧠 Short Term Memory
                   </Link>
                 </li>
                 <li>
