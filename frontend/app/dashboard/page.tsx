@@ -83,27 +83,6 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-bold mb-6">Available Treatments</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Speech Echo - Active */}
-          <Link
-            href="/dashboard/treatments/speech-echo"
-            className="block p-6 border-2 border-[var(--color-primary)] rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-          >
-            <div className="flex items-start space-x-4">
-              <div className="text-5xl">🎤</div>
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold text-[var(--color-primary)] mb-2">
-                  Speech Echo
-                </h3>
-                <p className="text-lg text-gray-700 mb-3">
-                  Practice speaking and listening. Record your voice and hear it played back to you.
-                </p>
-                <span className="inline-block bg-[var(--color-primary)] text-white px-4 py-2 rounded-full text-base font-semibold">
-                  Start Now →
-                </span>
-              </div>
-            </div>
-          </Link>
-
           {/* Word Finding - Active */}
           <Link
             href="/dashboard/treatments/word-finding"
@@ -172,11 +151,11 @@ export default function DashboardPage() {
 
         <div className="flex flex-col sm:flex-row gap-4">
           <Link
-            href="/dashboard/treatments/speech-echo"
+            href="/dashboard/treatments/life-words"
             className="flex-1 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold py-4 px-6 rounded-lg text-xl text-center transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2"
             style={{ minHeight: '44px' }}
           >
-            🎤 Start Speech Echo
+            👤 Start Life Words
           </Link>
 
           <Link

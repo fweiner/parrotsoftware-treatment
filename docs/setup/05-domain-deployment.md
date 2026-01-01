@@ -55,7 +55,8 @@ The deployment is triggered by creating a release with a version tag:
 
      ### Features
      - Authentication system (username/password)
-     - Speech Echo demo treatment app
+     - Word Finding treatment app
+     - Life Words treatment app
      - Progress tracking dashboard
      - Accessibility features for 65+ users
 
@@ -341,7 +342,7 @@ curl https://api.parrotsoftware.com/health
 1. Try signing up for an account
 2. Check email for confirmation
 3. Log in
-4. Test the Speech Echo treatment app
+4. Test the Word Finding or Life Words treatment app
 5. Verify data is saved to Supabase
 
 ## Troubleshooting

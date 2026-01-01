@@ -148,20 +148,6 @@ class TextToSpeechRequest(BaseModel):
     voice_name: Optional[str] = None
 
 
-# Speech Echo Schemas
-class SpeechEchoRequest(BaseModel):
-    """Speech echo treatment request."""
-    audio_data: str  # Base64 encoded audio
-
-
-class SpeechEchoResponse(BaseModel):
-    """Speech echo treatment response."""
-    session_id: str
-    transcribed_text: str
-    audio_url: Optional[str] = None  # URL to synthesized audio
-    created_at: datetime
-
-
 # Word Finding Schemas
 class WordFindingSessionCreate(BaseModel):
     """Create word-finding session request."""

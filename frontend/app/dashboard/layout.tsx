@@ -88,19 +88,18 @@ export default function DashboardLayout({
                 </li>
                 <li>
                   <Link
-                    href="/dashboard/treatments/speech-echo"
+                    href="/dashboard/treatments/word-finding"
                     className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                   >
-                    🎤 Speech Echo
+                    📝 Word Finding
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/dashboard/treatments/word-finding"
-                    className="block px-4 py-3 text-lg font-medium text-gray-500 hover:bg-gray-50 rounded-lg transition-colors cursor-not-allowed"
-                    aria-disabled="true"
+                    href="/dashboard/treatments/life-words"
+                    className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                   >
-                    📝 Word Finding <span className="text-sm">(Coming Soon)</span>
+                    👤 Life Words
                   </Link>
                 </li>
                 <li>

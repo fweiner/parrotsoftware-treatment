@@ -8,9 +8,7 @@ from app.models.schemas import (
     TreatmentSessionResponse,
     TreatmentSessionUpdate,
     SpeechTranscribeResponse,
-    TextToSpeechRequest,
-    SpeechEchoRequest,
-    SpeechEchoResponse
+    TextToSpeechRequest
 )
 from app.services.treatment_service import TreatmentService
 from app.services.speech_service import speech_service
@@ -132,78 +130,4 @@ async def synthesize_speech(
         raise HTTPException(
             status_code=500,
             detail=f"Error synthesizing speech: {str(e)}"
-        )
-
-
-@router.post("/speech-echo", response_model=dict)
-async def speech_echo_treatment(
-    audio: UploadFile = File(...),
-    user_id: CurrentUserId = None,
-    db: Database = None
-):
-    """
-    Speech Echo treatment app.
-    Records user speech, transcribes it, and echoes it back.
-    """
-    try:
-        # Create treatment session
-        service = TreatmentService(db)
-        session = await service.create_session(
-            user_id,
-            TreatmentSessionCreate(
-                treatment_type="speech_echo",
-                data={}
-            )
-        )
-
-        # Read and transcribe audio
-        audio_content = await audio.read()
-        transcribed_text, confidence = await speech_service.speech_to_text(
-            audio_content
-        )
-
-        # Generate speech from transcribed text
-        synthesized_audio = await speech_service.text_to_speech(
-            transcribed_text
-        )
-
-        # Encode audio as base64
-        audio_base64 = base64.b64encode(synthesized_audio).decode('utf-8')
-
-        # Update session with results
-        await service.complete_session(
-            session["id"],
-            user_id,
-            data={
-                "transcribed_text": transcribed_text,
-                "confidence": confidence
-            }
-        )
-
-        # Create result record
-        from app.models.schemas import TreatmentResultCreate
-        await service.create_result(
-            user_id,
-            TreatmentResultCreate(
-                session_id=session["id"],
-                score=int(confidence * 100) if confidence else None,
-                details={
-                    "transcribed_text": transcribed_text,
-                    "confidence": confidence
-                }
-            )
-        )
-
-        return {
-            "session_id": session["id"],
-            "transcribed_text": transcribed_text,
-            "confidence": confidence,
-            "audio_content": audio_base64,
-            "format": "mp3"
-        }
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error in speech echo treatment: {str(e)}"
         )

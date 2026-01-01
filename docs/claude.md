@@ -143,9 +143,9 @@ parrotsoftware-treatment/
 │   │   │   ├── layout.tsx        # Dashboard layout with nav
 │   │   │   ├── page.tsx          # Dashboard home
 │   │   │   ├── treatments/       # Treatment apps
-│   │   │   │   ├── speech-echo/
 │   │   │   │   ├── word-finding/
-│   │   │   │   └── ...           # 8 more treatment apps
+│   │   │   │   ├── life-words/
+│   │   │   │   └── ...           # Other treatment apps
 │   │   │   ├── progress/         # Progress tracking
 │   │   │   └── settings/
 │   │   ├── layout.tsx            # Root layout
@@ -250,10 +250,10 @@ CREATE TABLE public.treatment_sessions (
 ```
 
 **Treatment Types**:
-- `speech_echo` - Speech echo demo app
-- `word_finding` - Word finding exercises (placeholder)
+- `word_finding` - Word finding exercises
+- `life_words` - Personal contacts/items naming practice
 - `short_term_memory` - Memory exercises (placeholder)
-- ...7 more types (to be defined)
+- ...more types (to be defined)
 
 **Indexes**:
 - `treatment_sessions_user_id_idx`
@@ -333,7 +333,7 @@ GET    /api/auth/me           # Get current user info
 ### Treatments (`/api/treatments`)
 
 ```
-POST   /api/treatments/speech-echo        # Speech echo treatment
+POST   /api/treatments/sessions           # Create treatment session
 GET    /api/treatments/sessions           # Get user's sessions
 GET    /api/treatments/sessions/:id       # Get specific session
 ```

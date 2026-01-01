@@ -144,19 +144,19 @@ async def test_create_session(mock_db):
     mock_db.insert.return_value = {
         "id": "session-123",
         "user_id": "user-123",
-        "treatment_type": "speech_echo"
+        "treatment_type": "word_finding"
     }
 
     service = TreatmentService(mock_db)
     session_data = TreatmentSessionCreate(
-        treatment_type="speech_echo",
+        treatment_type="word_finding",
         data={}
     )
 
     result = await service.create_session("user-123", session_data)
 
     assert result["id"] == "session-123"
-    assert result["treatment_type"] == "speech_echo"
+    assert result["treatment_type"] == "word_finding"
 ```
 
 ### Integration Test Example
@@ -177,7 +177,7 @@ def test_get_user_sessions_success(app, client, mock_user_id, mock_db):
     app.dependency_overrides[get_db] = override_get_db
 
     mock_db.query.return_value = [
-        {"id": "session-1", "treatment_type": "speech_echo"}
+        {"id": "session-1", "treatment_type": "word_finding"}
     ]
 
     response = client.get(

@@ -113,7 +113,7 @@ def test_get_user_progress_success(app, client, mock_user_id, mock_db):
     mock_db.query.return_value = [{
         "id": "progress-1",
         "user_id": mock_user_id,
-        "treatment_type": "speech_echo",
+        "treatment_type": "word_finding",
         "total_sessions": 15,
         "average_score": 87.5
     }]
@@ -169,12 +169,12 @@ def test_get_user_progress_with_filter(app, client, mock_user_id, mock_db):
     app.dependency_overrides[get_db] = override_get_db
 
     mock_db.query.return_value = [{
-        "treatment_type": "speech_echo",
+        "treatment_type": "word_finding",
         "total_sessions": 10
     }]
 
     response = client.get(
-        f"/api/results/progress/{mock_user_id}?treatment_type=speech_echo",
+        f"/api/results/progress/{mock_user_id}?treatment_type=word_finding",
         headers={"Authorization": "Bearer valid-token"}
     )
 
@@ -240,7 +240,7 @@ def test_get_my_progress_success(app, client, mock_user_id, mock_db):
 
     mock_db.query.return_value = [{
         "id": "progress-1",
-        "treatment_type": "speech_echo",
+        "treatment_type": "word_finding",
         "total_sessions": 20,
         "average_score": 88.0
     }]
@@ -271,15 +271,15 @@ def test_get_my_progress_with_filter(app, client, mock_user_id, mock_db):
     app.dependency_overrides[get_db] = override_get_db
 
     mock_db.query.return_value = [{
-        "treatment_type": "speech_echo",
+        "treatment_type": "word_finding",
         "total_sessions": 10
     }]
 
     response = client.get(
-        "/api/results/my-progress?treatment_type=speech_echo",
+        "/api/results/my-progress?treatment_type=word_finding",
         headers={"Authorization": "Bearer valid-token"}
     )
 
     assert response.status_code == 200
     data = response.json()
-    assert data[0]["treatment_type"] == "speech_echo"
+    assert data[0]["treatment_type"] == "word_finding"

@@ -234,12 +234,12 @@ See [Supabase Setup Guide](./docs/setup/06-supabase-setup.md) for schema details
 
 ### Implemented
 
-1. ✅ **Speech Echo** - Demonstrates speech recording, transcription, and playback
+1. ✅ **Word Finding** - Image-based word recall with semantic cues
+2. ✅ **Life Words** - Personal contacts and items naming practice
 
-### Planned (9 remaining)
+### Planned
 
-2. ⏳ Short Term Memory
-3. ⏳ Word Finding
+3. ⏳ Short Term Memory
 4. ⏳ Pattern Recognition
 5. ⏳ Sequential Memory
 6. ⏳ Visual Perception

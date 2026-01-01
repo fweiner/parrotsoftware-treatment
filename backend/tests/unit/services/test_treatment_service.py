@@ -13,18 +13,18 @@ async def test_create_session(mock_db):
     mock_db.insert.return_value = {
         "id": "session-123",
         "user_id": "user-123",
-        "treatment_type": "speech_echo",
+        "treatment_type": "word_finding",
         "data": {},
         "started_at": datetime.utcnow().isoformat()
     }
 
     service = TreatmentService(mock_db)
-    session_data = TreatmentSessionCreate(treatment_type="speech_echo", data={})
+    session_data = TreatmentSessionCreate(treatment_type="word_finding", data={})
 
     result = await service.create_session("user-123", session_data)
 
     assert result["id"] == "session-123"
-    assert result["treatment_type"] == "speech_echo"
+    assert result["treatment_type"] == "word_finding"
     mock_db.insert.assert_called_once()
 
 
@@ -113,14 +113,14 @@ async def test_get_user_sessions_with_filter(mock_db):
     """Test retrieving sessions with treatment type filter."""
     from app.services.treatment_service import TreatmentService
 
-    mock_db.query.return_value = [{"id": "session-1", "treatment_type": "speech_echo"}]
+    mock_db.query.return_value = [{"id": "session-1", "treatment_type": "word_finding"}]
 
     service = TreatmentService(mock_db)
-    results = await service.get_user_sessions("user-123", treatment_type="speech_echo")
+    results = await service.get_user_sessions("user-123", treatment_type="word_finding")
 
     assert len(results) == 1
     call_args = mock_db.query.call_args
-    assert call_args.kwargs["filters"]["treatment_type"] == "speech_echo"
+    assert call_args.kwargs["filters"]["treatment_type"] == "word_finding"
 
 
 @pytest.mark.asyncio
@@ -183,7 +183,7 @@ async def test_get_user_progress(mock_db):
     mock_db.query.return_value = [{
         "id": "progress-1",
         "user_id": "user-123",
-        "treatment_type": "speech_echo",
+        "treatment_type": "word_finding",
         "total_sessions": 10,
         "average_score": 87.5
     }]
