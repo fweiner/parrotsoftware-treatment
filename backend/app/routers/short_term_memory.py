@@ -64,8 +64,10 @@ async def create_session(
             "total_trials": 0,
         }
     )
-    # insert returns a list, get first item
-    return result[0] if result else result
+    # insert returns a list, get first item (handle both list and dict for tests)
+    if isinstance(result, list):
+        return result[0] if result else result
+    return result
 
 
 @router.get("/sessions", response_model=STMSessionListResponse)
@@ -177,7 +179,11 @@ async def create_trial(
             "is_fully_correct": False,
         }
     )
-    trial = trial_result[0] if trial_result else trial_result
+    # Handle both list and dict returns
+    if isinstance(trial_result, list):
+        trial = trial_result[0] if trial_result else trial_result
+    else:
+        trial = trial_result
 
     # Create trial items
     for i, item in enumerate(items):
