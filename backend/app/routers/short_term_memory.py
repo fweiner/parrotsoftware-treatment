@@ -55,7 +55,7 @@ async def create_session(
     db: Database
 ):
     """Create a new short-term memory session."""
-    session = await db.insert(
+    result = await db.insert(
         "stm_sessions",
         {
             "user_id": user_id,
@@ -64,7 +64,8 @@ async def create_session(
             "total_trials": 0,
         }
     )
-    return session
+    # insert returns a list, get first item
+    return result[0] if result else result
 
 
 @router.get("/sessions", response_model=STMSessionListResponse)
@@ -166,7 +167,7 @@ async def create_trial(
         )
 
     # Create trial
-    trial = await db.insert(
+    trial_result = await db.insert(
         "stm_session_trials",
         {
             "session_id": session_id,
@@ -176,6 +177,7 @@ async def create_trial(
             "is_fully_correct": False,
         }
     )
+    trial = trial_result[0] if trial_result else trial_result
 
     # Create trial items
     for i, item in enumerate(items):
