@@ -89,9 +89,15 @@ export default function ShortTermMemoryPage() {
       if (response.ok) {
         const newSession = await response.json()
         router.push('/dashboard/treatments/short-term-memory/session/' + newSession.id)
+      } else {
+        const errorData = await response.text()
+        console.error('API error:', response.status, errorData)
+        alert('Failed to start session. Please try again.')
+        setStarting(false)
       }
     } catch (error) {
       console.error('Error starting session:', error)
+      alert('Failed to start session. Please check your connection.')
       setStarting(false)
     }
   }
