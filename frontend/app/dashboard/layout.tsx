@@ -105,8 +105,8 @@ export default function DashboardLayout({
                 <li>
                   <Link
                     href="/dashboard/treatments/short-term-memory"
-                    className="block px-4 py-3 text-lg font-medium text-gray-500 hover:bg-gray-50 rounded-lg transition-colors cursor-not-allowed"
-                    aria-disabled="true"
+                    className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                    
                   >
                     🧠 Short Term Memory <span className="text-sm">(Coming Soon)</span>
                   </Link>
