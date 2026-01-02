@@ -48,6 +48,16 @@ export default function STMSessionPage() {
   const recognitionRef = useRef<any>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
+  const speakText = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = 'en-US'
+      utterance.rate = 0.9
+      window.speechSynthesis.speak(utterance)
+    }
+  }
+
   // Load session
   useEffect(() => {
     loadSession()
@@ -121,12 +131,13 @@ export default function STMSessionPage() {
   }
 
   const startTimer = () => {
-    setTimer(30)
+    setTimer(5)
     timerRef.current = setInterval(() => {
       setTimer(prev => {
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current)
           setPhase('recalling')
+          startListening() // Auto-start speech recognition
           return 0
         }
         return prev - 1
@@ -154,7 +165,12 @@ export default function STMSessionPage() {
         }
       }
       if (finalTranscript) {
-        setTranscript(prev => prev + finalTranscript)
+        setTranscript(prev => {
+          const newTranscript = prev + finalTranscript
+          // Speak what was heard
+          speakText('You said: ' + finalTranscript.trim())
+          return newTranscript
+        })
       }
     }
 
@@ -242,6 +258,11 @@ export default function STMSessionPage() {
     const correct = matchResults.filter(m => m.isCorrect).length
     setResults(prev => [...prev, { correct, total: targetItems.length }])
     setPhase('feedback')
+
+    // Speak the results
+    const resultText = `You got ${correct} out of ${targetItems.length} correct. ` +
+      matchResults.map(m => m.target + ': ' + (m.isCorrect ? 'correct' : 'missed')).join('. ')
+    speakText(resultText)
   }
 
   const nextTrial = () => {
@@ -408,21 +429,14 @@ export default function STMSessionPage() {
               Now speak the items you remember!
             </p>
 
-            {!isListening ? (
-              <button
-                onClick={startListening}
-                className="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-full text-xl mb-6"
-              >
-                🎤 Start Speaking
-              </button>
-            ) : (
-              <div className="mb-6">
-                <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mx-auto animate-pulse">
-                  <span className="text-3xl">🎤</span>
-                </div>
-                <p className="text-red-600 font-bold mt-2">Listening...</p>
+            <div className="mb-6">
+              <div className={'w-20 h-20 rounded-full flex items-center justify-center mx-auto ' + (isListening ? 'bg-red-500 animate-pulse' : 'bg-gray-400')}>
+                <span className="text-3xl">🎤</span>
               </div>
-            )}
+              <p className={isListening ? 'text-red-600 font-bold mt-2' : 'text-gray-600 mt-2'}>
+                {isListening ? 'Listening...' : 'Microphone ready'}
+              </p>
+            </div>
 
             {transcript && (
               <div className="bg-gray-100 rounded-lg p-4 mb-6 text-left">
