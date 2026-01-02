@@ -23,6 +23,8 @@ class SupabaseClient:
         select: str = "*",
         filters: Optional[Dict[str, Any]] = None,
         order: Optional[str] = None,
+        order_by: Optional[str] = None,
+        order_desc: bool = False,
         limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Query table with filters."""
@@ -33,8 +35,13 @@ class SupabaseClient:
             for key, value in filters.items():
                 params[f"{key}"] = f"eq.{value}"
 
-        if order:
-            params["order"] = order
+        # Support both 'order' and 'order_by' parameter names
+        order_field = order or order_by
+        if order_field:
+            if order_desc:
+                params["order"] = f"{order_field}.desc"
+            else:
+                params["order"] = order_field
 
         if limit:
             params["limit"] = str(limit)
