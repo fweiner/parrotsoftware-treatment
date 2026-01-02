@@ -47,6 +47,7 @@ export default function STMSessionPage() {
 
   const recognitionRef = useRef<any>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const currentTrialRef = useRef<Trial | null>(null)
 
   const speakText = (text: string) => {
     if ('speechSynthesis' in window) {
@@ -108,6 +109,7 @@ export default function STMSessionPage() {
     if (response.ok) {
       const trial = await response.json()
       setCurrentTrial(trial)
+      currentTrialRef.current = trial
       setPhase('listening')
       speakList(trial.items.map((i: GroceryItem) => i.name))
     }
@@ -215,7 +217,9 @@ export default function STMSessionPage() {
   }
 
   const submitRecallAuto = async (currentTranscript: string) => {
-    if (!currentTrial) return
+    // Use ref to get the latest trial (not stale closure value)
+    const trial = currentTrialRef.current
+    if (!trial) return
 
     // Parse transcript into words - keep words with length > 1 (not just > 2)
     const spokenWords = currentTranscript
@@ -225,9 +229,10 @@ export default function STMSessionPage() {
 
     console.log('Transcript:', currentTranscript)
     console.log('Spoken words:', spokenWords)
+    console.log('Target items (from ref):', trial.items.map(i => i.name))
 
     // Match against target items using improved matching
-    const targetItems = currentTrial.items.map(i => i.name.toLowerCase())
+    const targetItems = trial.items.map(i => i.name.toLowerCase())
     const matchResults = targetItems.map(target => {
       const found = spokenWords.find(spoken => wordsMatch(spoken, target))
       return {
@@ -247,7 +252,7 @@ export default function STMSessionPage() {
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
     const recallAttempts = matchResults.map(m => ({
-      trial_id: currentTrial.id,
+      trial_id: trial.id,
       target_item_name: m.target,
       spoken_item: m.spoken,
       is_correct: m.isCorrect,
@@ -258,7 +263,7 @@ export default function STMSessionPage() {
 
     try {
       const response = await fetch(
-        apiUrl + '/api/short-term-memory/trials/' + currentTrial.id + '/complete',
+        apiUrl + '/api/short-term-memory/trials/' + trial.id + '/complete',
         {
           method: 'POST',
           headers,
@@ -386,6 +391,7 @@ export default function STMSessionPage() {
     if (response.ok) {
       const trial = await response.json()
       setCurrentTrial(trial)
+      currentTrialRef.current = trial
       setPhase('listening')
       speakList(trial.items.map((i: GroceryItem) => i.name))
     }
