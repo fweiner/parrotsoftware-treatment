@@ -212,27 +212,27 @@ export default function STMSessionPage() {
   const submitRecallAuto = async (currentTranscript: string) => {
     if (!currentTrial) return
 
-    // Parse transcript into words
+    // Parse transcript into words - keep words with length > 1 (not just > 2)
     const spokenWords = currentTranscript
       .toLowerCase()
       .split(/[\s,]+/)
-      .filter(w => w.length > 2)
+      .filter(w => w.length > 1)
 
-    // Match against target items
+    console.log('Transcript:', currentTranscript)
+    console.log('Spoken words:', spokenWords)
+
+    // Match against target items using improved matching
     const targetItems = currentTrial.items.map(i => i.name.toLowerCase())
     const matchResults = targetItems.map(target => {
-      const found = spokenWords.find(spoken =>
-        spoken === target ||
-        spoken.includes(target) ||
-        target.includes(spoken) ||
-        levenshtein(spoken, target) <= 2
-      )
+      const found = spokenWords.find(spoken => wordsMatch(spoken, target))
       return {
         target,
         spoken: found || null,
         isCorrect: !!found
       }
     })
+
+    console.log('Match results:', matchResults)
 
     setMatches(matchResults)
 
@@ -284,27 +284,27 @@ export default function STMSessionPage() {
 
     stopListening()
 
-    // Parse transcript into words
+    // Parse transcript into words - keep words with length > 1
     const spokenWords = transcript
       .toLowerCase()
       .split(/[\s,]+/)
-      .filter(w => w.length > 2)
+      .filter(w => w.length > 1)
 
-    // Match against target items
+    console.log('Manual submit - Transcript:', transcript)
+    console.log('Manual submit - Spoken words:', spokenWords)
+
+    // Match against target items using improved matching
     const targetItems = currentTrial.items.map(i => i.name.toLowerCase())
     const matchResults = targetItems.map(target => {
-      const found = spokenWords.find(spoken =>
-        spoken === target ||
-        spoken.includes(target) ||
-        target.includes(spoken) ||
-        levenshtein(spoken, target) <= 2
-      )
+      const found = spokenWords.find(spoken => wordsMatch(spoken, target))
       return {
         target,
         spoken: found || null,
         isCorrect: !!found
       }
     })
+
+    console.log('Manual submit - Match results:', matchResults)
 
     setMatches(matchResults)
 
@@ -419,6 +419,41 @@ export default function STMSessionPage() {
       }
     }
     return matrix[b.length][a.length]
+  }
+
+  // Normalize word for matching (handle plurals, common speech recognition errors)
+  function normalizeWord(word: string): string {
+    let normalized = word.toLowerCase().trim()
+    // Remove trailing 's' for plural handling
+    if (normalized.endsWith('s') && normalized.length > 3) {
+      normalized = normalized.slice(0, -1)
+    }
+    return normalized
+  }
+
+  // Check if two words match with flexible matching
+  function wordsMatch(spoken: string, target: string): boolean {
+    const spokenNorm = normalizeWord(spoken)
+    const targetNorm = normalizeWord(target)
+
+    // Exact match after normalization
+    if (spokenNorm === targetNorm) return true
+
+    // One contains the other (for compound words or partial recognition)
+    if (spokenNorm.includes(targetNorm) || targetNorm.includes(spokenNorm)) return true
+
+    // Calculate Levenshtein distance with dynamic threshold based on word length
+    const maxLen = Math.max(spokenNorm.length, targetNorm.length)
+    const threshold = maxLen <= 4 ? 1 : maxLen <= 6 ? 2 : 3
+    if (levenshtein(spokenNorm, targetNorm) <= threshold) return true
+
+    // Check without trailing 's' on both
+    const spokenNoS = spokenNorm.replace(/s$/, '')
+    const targetNoS = targetNorm.replace(/s$/, '')
+    if (spokenNoS === targetNoS) return true
+    if (levenshtein(spokenNoS, targetNoS) <= threshold) return true
+
+    return false
   }
 
   if (phase === 'loading') {
@@ -565,16 +600,31 @@ export default function STMSessionPage() {
           <div className="text-center">
             <h3 className="text-2xl font-bold mb-6">Results</h3>
 
+            {/* Show what was heard */}
+            {transcript && (
+              <div className="bg-blue-50 rounded-lg p-3 mb-4 text-left">
+                <p className="text-sm text-blue-700 font-medium">What the app heard:</p>
+                <p className="text-blue-900">{transcript}</p>
+              </div>
+            )}
+
             <div className="space-y-3 mb-8">
               {matches.map((m, i) => (
                 <div
                   key={i}
-                  className={'p-4 rounded-lg flex justify-between items-center ' + (m.isCorrect ? 'bg-green-100' : 'bg-red-100')}
+                  className={'p-4 rounded-lg ' + (m.isCorrect ? 'bg-green-100' : 'bg-red-100')}
                 >
-                  <span className="font-medium capitalize">{m.target}</span>
-                  <span className={m.isCorrect ? 'text-green-600' : 'text-red-600'}>
-                    {m.isCorrect ? 'Correct!' : 'Missed'}
-                  </span>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium capitalize">{m.target}</span>
+                    <span className={m.isCorrect ? 'text-green-600' : 'text-red-600'}>
+                      {m.isCorrect ? 'Correct!' : 'Missed'}
+                    </span>
+                  </div>
+                  {m.spoken && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      Matched: &quot;{m.spoken}&quot;
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
