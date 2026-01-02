@@ -159,33 +159,38 @@ export default function STMSessionPage() {
     recognitionRef.current.interimResults = true
     recognitionRef.current.lang = 'en-US'
 
+    // Track which results we've already processed to avoid duplicates
+    let processedResultsCount = 0
+
     recognitionRef.current.onresult = (event: any) => {
       let finalTranscript = ''
-      for (let i = 0; i < event.results.length; i++) {
+      // Only process new results (starting from where we left off)
+      for (let i = processedResultsCount; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
           finalTranscript += event.results[i][0].transcript + ' '
+          processedResultsCount = i + 1
         }
       }
       if (finalTranscript) {
-        setTranscript(prev => {
-          const newTranscript = prev + finalTranscript
-          // Speak what was heard, then auto-submit after speaking
-          const utterance = new SpeechSynthesisUtterance('You said: ' + finalTranscript.trim())
-          utterance.lang = 'en-US'
-          utterance.rate = 0.9
-          utterance.onend = () => {
-            // Auto-submit after speaking back what was heard
-            setTimeout(() => {
-              if (recognitionRef.current) {
-                recognitionRef.current.stop()
-              }
-              submitRecallAuto(newTranscript)
-            }, 500)
-          }
-          window.speechSynthesis.cancel()
-          window.speechSynthesis.speak(utterance)
-          return newTranscript
-        })
+        // Use just this new transcript, not accumulated
+        const newTranscript = finalTranscript.trim()
+        setTranscript(newTranscript)
+
+        // Speak what was heard, then auto-submit after speaking
+        const utterance = new SpeechSynthesisUtterance('You said: ' + newTranscript)
+        utterance.lang = 'en-US'
+        utterance.rate = 0.9
+        utterance.onend = () => {
+          // Auto-submit after speaking back what was heard
+          setTimeout(() => {
+            if (recognitionRef.current) {
+              recognitionRef.current.stop()
+            }
+            submitRecallAuto(newTranscript)
+          }, 500)
+        }
+        window.speechSynthesis.cancel()
+        window.speechSynthesis.speak(utterance)
       }
     }
 
@@ -366,6 +371,9 @@ export default function STMSessionPage() {
   }
 
   const startTrialWithNumber = async (trialNum: number) => {
+    // Clear previous trial's transcript before starting new trial
+    setTranscript('')
+
     const headers = await getAuthHeaders()
     if (!headers) return
 
