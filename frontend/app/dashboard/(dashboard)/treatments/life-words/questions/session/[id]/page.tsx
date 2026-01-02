@@ -47,6 +47,9 @@ interface QuestionResponse {
   correctness_score: number
 }
 
+// Session phases
+type SessionPhase = 'study' | 'quiz' | 'completed'
+
 // Question type names for display
 const QUESTION_TYPE_NAMES: Record<number, string> = {
   1: 'Relationship',
@@ -105,15 +108,21 @@ export default function LifeWordsQuestionSessionPage() {
   const sessionId = params.id as string
   const supabase = createClient()
 
+  // Session state
   const [session, setSession] = useState<QuestionSession | null>(null)
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([])
   const [contacts, setContacts] = useState<PersonalContact[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Phase state
+  const [phase, setPhase] = useState<SessionPhase>('study')
+  const [studyIndex, setStudyIndex] = useState(0)
+
+  // Quiz state
   const [currentIndex, setCurrentIndex] = useState(0)
   const [currentQuestion, setCurrentQuestion] = useState<GeneratedQuestion | null>(null)
   const [isAnswering, setIsAnswering] = useState(false)
-  const [isCompleted, setIsCompleted] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [isProcessingAnswer, setIsProcessingAnswer] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [lastResult, setLastResult] = useState<{
@@ -126,6 +135,7 @@ export default function LifeWordsQuestionSessionPage() {
   const [questionStartTime, setQuestionStartTime] = useState<number>(0)
   const [statistics, setStatistics] = useState<any>(null)
 
+  // Refs for async callbacks
   const isProcessingAnswerRef = useRef(false)
   const currentQuestionRef = useRef<GeneratedQuestion | null>(null)
   const currentIndexRef = useRef(0)
@@ -169,12 +179,12 @@ export default function LifeWordsQuestionSessionPage() {
       setSession(sessionData.session as QuestionSession)
       setContacts(sessionData.contacts as PersonalContact[])
 
-      // If session has existing responses, this is a resumed session
+      // If session has existing responses, this is a resumed session - skip to quiz
       if (sessionData.responses && sessionData.responses.length > 0) {
         setResponses(sessionData.responses)
       }
 
-      // Regenerate questions from contacts
+      // Generate questions from contacts
       const questionsResponse = await regenerateQuestions(
         sessionData.contacts,
         authSession.access_token
@@ -182,16 +192,9 @@ export default function LifeWordsQuestionSessionPage() {
 
       if (questionsResponse && questionsResponse.length > 0) {
         setQuestions(questionsResponse)
-        const firstQuestion = questionsResponse[0]
-        setCurrentIndex(0)
-        currentIndexRef.current = 0
-        setCurrentQuestion(firstQuestion)
-        currentQuestionRef.current = firstQuestion
-        setIsAnswering(true)
-
-        const startTime = Date.now()
-        setQuestionStartTime(startTime)
-        questionStartTimeRef.current = startTime
+        // Start in study phase
+        setPhase('study')
+        setStudyIndex(0)
       }
 
       setLoading(false)
@@ -206,7 +209,6 @@ export default function LifeWordsQuestionSessionPage() {
     contactList: PersonalContact[],
     token: string
   ): Promise<GeneratedQuestion[]> => {
-    // Generate questions locally based on contacts (matching backend logic)
     const generated: GeneratedQuestion[] = []
 
     if (contactList.length < 2) return generated
@@ -280,6 +282,65 @@ export default function LifeWordsQuestionSessionPage() {
 
     return generated
   }
+
+  // ==================== STUDY PHASE ====================
+
+  const handleStudyNext = async () => {
+    if (studyIndex < questions.length - 1) {
+      const nextIndex = studyIndex + 1
+      setStudyIndex(nextIndex)
+
+      // Speak the next answer
+      const nextQ = questions[nextIndex]
+      try {
+        await speak(`${nextQ.question_text} The answer is: ${nextQ.expected_answer}`)
+      } catch (e) {
+        console.warn('TTS failed:', e)
+      }
+    } else {
+      // Done with study phase, start quiz
+      startQuizPhase()
+    }
+  }
+
+  const startQuizPhase = async () => {
+    setPhase('quiz')
+    setCurrentIndex(0)
+    currentIndexRef.current = 0
+
+    const firstQuestion = questions[0]
+    setCurrentQuestion(firstQuestion)
+    currentQuestionRef.current = firstQuestion
+    setIsAnswering(true)
+
+    const startTime = Date.now()
+    setQuestionStartTime(startTime)
+    questionStartTimeRef.current = startTime
+
+    try {
+      await speak("Now let's see what you remember. " + firstQuestion.question_text)
+    } catch (e) {
+      console.warn('TTS failed:', e)
+    }
+  }
+
+  // Speak study item when it changes
+  useEffect(() => {
+    if (phase === 'study' && questions.length > 0 && studyIndex === 0) {
+      const speakFirst = async () => {
+        try {
+          await waitForVoices()
+          const q = questions[0]
+          await speak(`${q.question_text} The answer is: ${q.expected_answer}`)
+        } catch (e) {
+          console.warn('TTS failed:', e)
+        }
+      }
+      speakFirst()
+    }
+  }, [phase, questions])
+
+  // ==================== QUIZ PHASE ====================
 
   const handleAnswer = async (transcript: string) => {
     const currentQ = currentQuestionRef.current
@@ -363,7 +424,7 @@ export default function LifeWordsQuestionSessionPage() {
             is_correct: evaluation.isCorrect,
             is_partial: evaluation.isPartial,
             response_time: responseTime,
-            clarity_score: 0.8, // Default speech clarity (could use speech confidence)
+            clarity_score: 0.8,
             correctness_score: evaluation.score,
           }),
         }
@@ -416,7 +477,7 @@ export default function LifeWordsQuestionSessionPage() {
   const completeSession = async () => {
     if (!session) return
 
-    setIsCompleted(true)
+    setPhase('completed')
     setIsAnswering(false)
 
     try {
@@ -447,7 +508,6 @@ export default function LifeWordsQuestionSessionPage() {
   }
 
   const handleSkip = () => {
-    // Record skipped as incorrect
     const currentQ = currentQuestionRef.current
     if (currentQ) {
       saveResponse(currentQ, '', { isCorrect: false, isPartial: false, score: 0 }, 0)
@@ -455,6 +515,8 @@ export default function LifeWordsQuestionSessionPage() {
     setShowFeedback(false)
     moveToNext()
   }
+
+  // ==================== RENDER ====================
 
   if (loading) {
     return (
@@ -484,7 +546,105 @@ export default function LifeWordsQuestionSessionPage() {
     )
   }
 
-  if (isCompleted) {
+  // ==================== STUDY PHASE UI ====================
+  if (phase === 'study' && questions.length > 0) {
+    const currentStudyQuestion = questions[studyIndex]
+    const isLastStudyItem = studyIndex === questions.length - 1
+
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+        {/* Phase indicator */}
+        <div className="mb-6">
+          <span className="bg-purple-100 text-purple-800 px-6 py-2 rounded-full text-xl font-semibold">
+            Study Phase - Learn the Answers
+          </span>
+        </div>
+
+        {/* Progress indicator */}
+        <div className="flex gap-2 mb-6">
+          {questions.map((_, idx) => (
+            <div
+              key={idx}
+              className={`w-3 h-3 rounded-full transition-colors ${
+                idx < studyIndex
+                  ? 'bg-purple-500'
+                  : idx === studyIndex
+                  ? 'bg-purple-600 ring-2 ring-purple-300'
+                  : 'bg-gray-300'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Question type badge */}
+        <div className="mb-4">
+          <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-lg font-semibold">
+            {QUESTION_TYPE_NAMES[currentStudyQuestion.question_type]}
+          </span>
+        </div>
+
+        {/* Contact photo (not for question type 5) */}
+        {currentStudyQuestion.question_type !== 5 && (
+          <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-lg overflow-hidden shadow-lg mb-6 border-4 border-purple-200">
+            <Image
+              src={currentStudyQuestion.contact_photo_url}
+              alt="Contact"
+              fill
+              className="object-cover"
+            />
+          </div>
+        )}
+
+        {/* Question */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-4 max-w-2xl">
+          <p className="text-2xl md:text-3xl text-gray-800 text-center font-medium">
+            {currentStudyQuestion.question_text}
+          </p>
+        </div>
+
+        {/* Answer (highlighted) */}
+        <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6 mb-8 max-w-2xl">
+          <p className="text-lg text-green-700 text-center mb-2">The answer is:</p>
+          <p className="text-3xl md:text-4xl text-green-800 text-center font-bold">
+            {currentStudyQuestion.expected_answer}
+          </p>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex gap-4">
+          <button
+            onClick={handleStudyNext}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-12 rounded-lg text-2xl transition-colors"
+          >
+            {isLastStudyItem ? "I'm Ready - Start Quiz" : 'Next'}
+          </button>
+        </div>
+
+        {/* Skip to quiz */}
+        <div className="mt-8">
+          <button
+            onClick={startQuizPhase}
+            className="text-gray-500 hover:text-gray-700 underline text-lg"
+          >
+            Skip study - go straight to quiz
+          </button>
+        </div>
+
+        {/* Done for now */}
+        <div className="mt-4">
+          <button
+            onClick={handleDone}
+            className="text-gray-500 hover:text-gray-700 underline text-lg"
+          >
+            Done for now
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ==================== COMPLETED PHASE UI ====================
+  if (phase === 'completed') {
     const totalCorrect = responses.filter(r => r.is_correct).length
     const totalPartial = responses.filter(r => r.is_partial && !r.is_correct).length
     const avgResponseTime = responses.length > 0
@@ -550,8 +710,16 @@ export default function LifeWordsQuestionSessionPage() {
     )
   }
 
+  // ==================== QUIZ PHASE UI ====================
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
+      {/* Phase indicator */}
+      <div className="mb-6">
+        <span className="bg-blue-100 text-blue-800 px-6 py-2 rounded-full text-xl font-semibold">
+          Quiz Phase - Answer the Questions
+        </span>
+      </div>
+
       {/* Progress indicator */}
       <div className="flex gap-2 mb-6">
         {questions.map((_, idx) => (
@@ -589,16 +757,6 @@ export default function LifeWordsQuestionSessionPage() {
                 alt="Contact"
                 fill
                 className="object-cover"
-                onLoad={async () => {
-                  if (currentIndex === 0) {
-                    try {
-                      await waitForVoices()
-                      await speak(currentQuestion.question_text)
-                    } catch (error: any) {
-                      console.log('TTS blocked:', error?.message || error)
-                    }
-                  }
-                }}
               />
             </div>
           )}
