@@ -51,3 +51,6 @@ app.include_router(messaging.router, prefix="/api/life-words/messaging", tags=["
 
 from app.routers import short_term_memory
 app.include_router(short_term_memory.router, prefix="/api/short-term-memory", tags=["short-term-memory"])
+
+from app.routers import life_words_questions
+app.include_router(life_words_questions.router, prefix="/api/life-words", tags=["life-words-questions"])

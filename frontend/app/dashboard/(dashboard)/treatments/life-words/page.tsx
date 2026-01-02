@@ -97,6 +97,48 @@ export default function LifeWordsPage() {
     }
   }
 
+  const handleStartQuestionSession = async () => {
+    setIsStarting(true)
+    setError(null)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        setError('Please log in to start a session')
+        return
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/life-words/question-sessions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      })
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to create question session'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.detail || errorMessage
+        } catch (e) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        }
+        throw new Error(errorMessage)
+      }
+
+      const sessionData = await response.json()
+      router.push(`/dashboard/treatments/life-words/questions/session/${sessionData.session.id}`)
+
+    } catch (err: any) {
+      setError(err.message || 'An error occurred')
+      console.error('Error creating question session:', err)
+    } finally {
+      setIsStarting(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -247,7 +289,16 @@ export default function LifeWordsPage() {
                 className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:bg-gray-400 text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                 style={{ minHeight: '44px' }}
               >
-                {isStarting ? 'Starting...' : 'Start a Conversation'}
+                {isStarting ? 'Starting...' : 'Name Practice'}
+              </button>
+
+              <button
+                onClick={handleStartQuestionSession}
+                disabled={isStarting}
+                className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-purple-300 focus:ring-offset-2"
+                style={{ minHeight: '44px' }}
+              >
+                {isStarting ? 'Starting...' : 'Question Practice'}
               </button>
 
               <Link
