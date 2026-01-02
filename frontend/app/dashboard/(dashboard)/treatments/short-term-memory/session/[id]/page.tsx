@@ -169,8 +169,21 @@ export default function STMSessionPage() {
       if (finalTranscript) {
         setTranscript(prev => {
           const newTranscript = prev + finalTranscript
-          // Speak what was heard
-          speakText('You said: ' + finalTranscript.trim())
+          // Speak what was heard, then auto-submit after speaking
+          const utterance = new SpeechSynthesisUtterance('You said: ' + finalTranscript.trim())
+          utterance.lang = 'en-US'
+          utterance.rate = 0.9
+          utterance.onend = () => {
+            // Auto-submit after speaking back what was heard
+            setTimeout(() => {
+              if (recognitionRef.current) {
+                recognitionRef.current.stop()
+              }
+              submitRecallAuto(newTranscript)
+            }, 500)
+          }
+          window.speechSynthesis.cancel()
+          window.speechSynthesis.speak(utterance)
           return newTranscript
         })
       }
@@ -194,6 +207,76 @@ export default function STMSessionPage() {
       recognitionRef.current.stop()
     }
     setIsListening(false)
+  }
+
+  const submitRecallAuto = async (currentTranscript: string) => {
+    if (!currentTrial) return
+
+    // Parse transcript into words
+    const spokenWords = currentTranscript
+      .toLowerCase()
+      .split(/[\s,]+/)
+      .filter(w => w.length > 2)
+
+    // Match against target items
+    const targetItems = currentTrial.items.map(i => i.name.toLowerCase())
+    const matchResults = targetItems.map(target => {
+      const found = spokenWords.find(spoken =>
+        spoken === target ||
+        spoken.includes(target) ||
+        target.includes(spoken) ||
+        levenshtein(spoken, target) <= 2
+      )
+      return {
+        target,
+        spoken: found || null,
+        isCorrect: !!found
+      }
+    })
+
+    setMatches(matchResults)
+
+    // Submit to API
+    const headers = await getAuthHeaders()
+    if (!headers) return
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const recallAttempts = matchResults.map(m => ({
+      trial_id: currentTrial.id,
+      target_item_name: m.target,
+      spoken_item: m.spoken,
+      is_correct: m.isCorrect,
+      is_partial: false,
+      match_confidence: m.isCorrect ? 1.0 : 0.0,
+      time_to_recall: 0
+    }))
+
+    try {
+      const response = await fetch(
+        apiUrl + '/api/short-term-memory/trials/' + currentTrial.id + '/complete',
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ recall_attempts: recallAttempts })
+        }
+      )
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Failed to submit recall:', response.status, errorText)
+      }
+    } catch (error) {
+      console.error('Error submitting recall:', error)
+    }
+
+    const correct = matchResults.filter(m => m.isCorrect).length
+    setResults(prev => [...prev, { correct, total: targetItems.length }])
+    setPhase('feedback')
+
+    // Speak the results
+    const resultText = `You got ${correct} out of ${targetItems.length} correct. ` +
+      matchResults.map(m => m.target + ': ' + (m.isCorrect ? 'correct' : 'missed')).join('. ')
+    speakText(resultText)
   }
 
   const submitRecall = async () => {
