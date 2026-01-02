@@ -213,21 +213,31 @@ export default function STMSessionPage() {
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
     const recallAttempts = matchResults.map(m => ({
-      trial_id: currentTrial.id,
       target_item_name: m.target,
       spoken_item: m.spoken,
       is_correct: m.isCorrect,
-      is_partial: false
+      is_partial: false,
+      match_confidence: m.isCorrect ? 1.0 : 0.0,
+      time_to_recall: 0
     }))
 
-    await fetch(
-      apiUrl + '/api/short-term-memory/trials/' + currentTrial.id + '/complete',
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ recall_attempts: recallAttempts })
+    try {
+      const response = await fetch(
+        apiUrl + '/api/short-term-memory/trials/' + currentTrial.id + '/complete',
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ recall_attempts: recallAttempts })
+        }
+      )
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Failed to submit recall:', response.status, errorText)
       }
-    )
+    } catch (error) {
+      console.error('Error submitting recall:', error)
+    }
 
     const correct = matchResults.filter(m => m.isCorrect).length
     setResults(prev => [...prev, { correct, total: targetItems.length }])
