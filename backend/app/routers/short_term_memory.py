@@ -255,93 +255,108 @@ async def complete_trial(
     db: Database
 ):
     """Complete a trial with recall attempts."""
-    # Get trial
-    trials = await db.query(
-        "stm_session_trials",
-        filters={"id": trial_id},
-        limit=1
-    )
+    import logging
+    logger = logging.getLogger(__name__)
 
-    if not trials:
-        raise HTTPException(status_code=404, detail="Trial not found")
-
-    trial = trials[0]
-
-    # Verify session ownership
-    sessions = await db.query(
-        "stm_sessions",
-        filters={"id": trial["session_id"], "user_id": user_id},
-        limit=1
-    )
-
-    if not sessions:
-        raise HTTPException(status_code=404, detail="Trial not found")
-
-    session = sessions[0]
-
-    # Get trial items for matching
-    trial_items = await db.query(
-        "stm_trial_items",
-        filters={"trial_id": trial_id},
-        order_by="position"
-    )
-
-    # Save recall attempts
-    items_correct = 0
-    for attempt in request.recall_attempts:
-        # Find matching trial item (case-insensitive)
-        target_item = next(
-            (ti for ti in trial_items if ti["item_name"].lower() == attempt.target_item_name.lower()),
-            None
+    try:
+        # Get trial
+        trials = await db.query(
+            "stm_session_trials",
+            filters={"id": trial_id},
+            limit=1
         )
 
-        await db.insert(
-            "stm_recall_attempts",
-            {
-                "trial_id": trial_id,
-                "target_item_id": target_item["id"] if target_item else None,
-                "target_item_name": attempt.target_item_name,
-                "spoken_item": attempt.spoken_item,
-                "match_confidence": attempt.match_confidence,
-                "is_correct": attempt.is_correct,
-                "is_partial": attempt.is_partial,
-                "time_to_recall": attempt.time_to_recall,
+        if not trials:
+            raise HTTPException(status_code=404, detail="Trial not found")
+
+        trial = trials[0]
+
+        # Check if trial is already completed
+        if trial.get("completed_at"):
+            logger.info(f"Trial {trial_id} already completed, returning existing data")
+            return trial
+
+        # Verify session ownership
+        sessions = await db.query(
+            "stm_sessions",
+            filters={"id": trial["session_id"], "user_id": user_id},
+            limit=1
+        )
+
+        if not sessions:
+            raise HTTPException(status_code=404, detail="Trial not found")
+
+        session = sessions[0]
+
+        # Get trial items for matching
+        trial_items = await db.query(
+            "stm_trial_items",
+            filters={"trial_id": trial_id},
+            order_by="position"
+        )
+
+        # Save recall attempts
+        items_correct = 0
+        for attempt in request.recall_attempts:
+            # Find matching trial item (case-insensitive)
+            target_item = next(
+                (ti for ti in trial_items if ti["item_name"].lower() == attempt.target_item_name.lower()),
+                None
+            )
+
+            await db.insert(
+                "stm_recall_attempts",
+                {
+                    "trial_id": trial_id,
+                    "target_item_id": target_item["id"] if target_item else None,
+                    "target_item_name": attempt.target_item_name,
+                    "spoken_item": attempt.spoken_item,
+                    "match_confidence": attempt.match_confidence if attempt.match_confidence is not None else None,
+                    "is_correct": attempt.is_correct,
+                    "is_partial": attempt.is_partial,
+                    "time_to_recall": attempt.time_to_recall if attempt.time_to_recall else None,
+                }
+            )
+
+            if attempt.is_correct:
+                items_correct += 1
+
+        is_fully_correct = items_correct == trial["list_length"]
+
+        # Update trial
+        await db.update(
+            "stm_session_trials",
+            filters={"id": trial_id},
+            data={
+                "completed_at": datetime.utcnow().isoformat(),
+                "items_correct": items_correct,
+                "is_fully_correct": is_fully_correct,
             }
         )
 
-        if attempt.is_correct:
-            items_correct += 1
+        # Update session totals
+        await db.update(
+            "stm_sessions",
+            filters={"id": trial["session_id"]},
+            data={
+                "total_correct": session["total_correct"] + items_correct,
+                "total_trials": session["total_trials"] + 1,
+            }
+        )
 
-    is_fully_correct = items_correct == trial["list_length"]
+        # Fetch the updated trial to return complete data
+        updated_trials = await db.query(
+            "stm_session_trials",
+            filters={"id": trial_id},
+            limit=1
+        )
+        return updated_trials[0] if updated_trials else trial
 
-    # Update trial
-    await db.update(
-        "stm_session_trials",
-        filters={"id": trial_id},
-        data={
-            "completed_at": datetime.utcnow().isoformat(),
-            "items_correct": items_correct,
-            "is_fully_correct": is_fully_correct,
-        }
-    )
-
-    # Update session totals
-    await db.update(
-        "stm_sessions",
-        filters={"id": trial["session_id"]},
-        data={
-            "total_correct": session["total_correct"] + items_correct,
-            "total_trials": session["total_trials"] + 1,
-        }
-    )
-
-    # Fetch the updated trial to return complete data
-    updated_trials = await db.query(
-        "stm_session_trials",
-        filters={"id": trial_id},
-        limit=1
-    )
-    return updated_trials[0] if updated_trials else trial
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error completing trial {trial_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error completing trial: {str(e)}")
 
 
 @router.post("/sessions/{session_id}/complete", response_model=STMSessionResponse)
