@@ -803,12 +803,13 @@ export default function LifeWordsQuestionSessionPage() {
           {/* Speech input or waiting */}
           {isAnswering && !showFeedback ? (
             <div className="flex flex-col items-center gap-4">
+              <p className="text-lg text-gray-600 mb-2">Take your time, then click the microphone to answer</p>
               <SpeechRecognitionButton
                 key={`speech-${currentIndex}`}
                 onResult={handleAnswer}
                 disabled={isProcessingAnswer}
                 resetTrigger={currentIndex}
-                autoStart={true}
+                autoStart={false}
               />
               <button
                 onClick={handleSkip}
