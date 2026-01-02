@@ -137,7 +137,9 @@ export default function STMSessionPage() {
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current)
           setPhase('recalling')
-          startListening() // Auto-start speech recognition
+          speakText('Now speak the items you remember')
+          // Delay starting speech recognition to let the prompt finish speaking
+          setTimeout(() => startListening(), 2000)
           return 0
         }
         return prev - 1
@@ -272,8 +274,28 @@ export default function STMSessionPage() {
     if (trialNumber >= 10) {
       completeSession()
     } else {
-      setTrialNumber(prev => prev + 1)
-      setPhase('ready')
+      const nextTrialNum = trialNumber + 1
+      setTrialNumber(nextTrialNum)
+      // Automatically start the next trial
+      startTrialWithNumber(nextTrialNum)
+    }
+  }
+
+  const startTrialWithNumber = async (trialNum: number) => {
+    const headers = await getAuthHeaders()
+    if (!headers) return
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const response = await fetch(
+      apiUrl + '/api/short-term-memory/sessions/' + sessionId + '/trials?trial_number=' + trialNum,
+      { method: 'POST', headers }
+    )
+
+    if (response.ok) {
+      const trial = await response.json()
+      setCurrentTrial(trial)
+      setPhase('listening')
+      speakList(trial.items.map((i: GroceryItem) => i.name))
     }
   }
 
@@ -481,7 +503,7 @@ export default function STMSessionPage() {
               onClick={nextTrial}
               className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-4 px-8 rounded-lg text-xl"
             >
-              {trialNumber >= 10 ? 'Finish Session' : 'Next Trial'}
+              {trialNumber >= 10 ? 'Finish Session' : 'Next Item'}
             </button>
           </div>
         )}
