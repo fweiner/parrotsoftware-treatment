@@ -315,7 +315,7 @@ async def complete_trial(
     is_fully_correct = items_correct == trial["list_length"]
 
     # Update trial
-    updated_trial = await db.update(
+    await db.update(
         "stm_session_trials",
         filters={"id": trial_id},
         data={
@@ -335,10 +335,13 @@ async def complete_trial(
         }
     )
 
-    # Handle both list and dict return types
-    if isinstance(updated_trial, list):
-        return updated_trial[0] if updated_trial else trial
-    return updated_trial
+    # Fetch the updated trial to return complete data
+    updated_trials = await db.query(
+        "stm_session_trials",
+        filters={"id": trial_id},
+        limit=1
+    )
+    return updated_trials[0] if updated_trials else trial
 
 
 @router.post("/sessions/{session_id}/complete", response_model=STMSessionResponse)

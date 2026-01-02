@@ -362,9 +362,10 @@ def test_complete_trial_success(app, client, mock_user_id, mock_db):
         [SAMPLE_TRIAL],  # Get trial
         [SAMPLE_SESSION],  # Verify ownership
         SAMPLE_TRIAL_ITEMS,  # Get trial items
+        [{**SAMPLE_TRIAL, "items_correct": 2, "is_fully_correct": False}],  # Fetch updated trial
     ]
     mock_db.insert.return_value = {"id": "attempt-1"}
-    mock_db.update.return_value = {**SAMPLE_TRIAL, "items_correct": 2, "is_fully_correct": False}
+    mock_db.update.return_value = {}
 
     response = client.post(
         f"/api/short-term-memory/trials/{SAMPLE_TRIAL_ID}/complete",
