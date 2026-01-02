@@ -77,7 +77,9 @@ class SupabaseClient:
             )
             response.raise_for_status()
             result = response.json()
-            return result[0] if isinstance(result, list) else result
+            if isinstance(result, list):
+                return result[0] if result else {}
+            return result
 
     async def delete(
         self,

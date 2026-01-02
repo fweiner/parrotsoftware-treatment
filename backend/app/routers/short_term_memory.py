@@ -289,9 +289,9 @@ async def complete_trial(
     # Save recall attempts
     items_correct = 0
     for attempt in request.recall_attempts:
-        # Find matching trial item
+        # Find matching trial item (case-insensitive)
         target_item = next(
-            (ti for ti in trial_items if ti["item_name"] == attempt.target_item_name),
+            (ti for ti in trial_items if ti["item_name"].lower() == attempt.target_item_name.lower()),
             None
         )
 
