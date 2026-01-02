@@ -231,6 +231,7 @@ export default function STMSessionPage() {
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
     const recallAttempts = matchResults.map(m => ({
+      trial_id: currentTrial.id,
       target_item_name: m.target,
       spoken_item: m.spoken,
       is_correct: m.isCorrect,
