@@ -114,6 +114,50 @@ def generate_questions_for_contacts(contacts: List[Dict[str, Any]]) -> List[Gene
     return questions
 
 
+# Stop words to filter out when comparing significant words
+STOP_WORDS = {
+    # Articles
+    "a", "an", "the",
+    # Prepositions
+    "in", "on", "at", "to", "for", "of", "with", "by", "from", "up", "down",
+    "into", "onto", "upon", "out", "over", "under", "through", "during",
+    # Conjunctions
+    "and", "or", "but", "so", "yet", "nor",
+    # Pronouns
+    "i", "me", "my", "we", "us", "our", "you", "your", "he", "him", "his",
+    "she", "her", "it", "its", "they", "them", "their", "who", "whom",
+    # Common verbs
+    "is", "are", "was", "were", "be", "been", "being", "am",
+    "do", "does", "did", "doing", "done",
+    "have", "has", "had", "having",
+    "go", "goes", "went", "going", "gone",
+    "get", "gets", "got", "getting",
+    "see", "sees", "saw", "seeing", "seen",
+    "come", "comes", "came", "coming",
+    "take", "takes", "took", "taking", "taken",
+    "make", "makes", "made", "making",
+    "know", "knows", "knew", "knowing", "known",
+    "think", "thinks", "thought", "thinking",
+    "say", "says", "said", "saying",
+    "like", "likes", "liked", "liking",
+    "want", "wants", "wanted", "wanting",
+    "can", "could", "will", "would", "shall", "should", "may", "might", "must",
+    # Adverbs
+    "very", "really", "just", "also", "too", "always", "never", "often",
+    "sometimes", "usually", "when", "where", "why", "how", "there", "here",
+    # Other common words
+    "that", "this", "these", "those", "what", "which",
+    "all", "each", "every", "some", "any", "no", "not",
+    "as", "if", "then", "than", "because", "while", "about",
+}
+
+
+def extract_significant_words(text: str) -> set:
+    """Extract significant words by removing stop words."""
+    words = set(text.lower().split())
+    return words - STOP_WORDS
+
+
 # Synonym groups for semantic matching
 SYNONYM_GROUPS = [
     # Relationships
@@ -219,10 +263,29 @@ def evaluate_answer(user_answer: str, expected: str, acceptable: List[str]) -> t
         if score >= 0.5:
             return True, True, score
 
+    # Extract significant words (filter out stop words like "when", "we", "go", "to")
+    user_significant = extract_significant_words(user_lower)
+    expected_significant = extract_significant_words(expected_lower)
+
+    # Check significant word overlap (e.g., "Connecticut" matches in both)
+    if user_significant and expected_significant:
+        significant_common = user_significant & expected_significant
+        if significant_common:
+            score = len(significant_common) / max(len(user_significant), len(expected_significant))
+            # If any significant word matches, give credit
+            if score >= 0.3 or len(significant_common) >= 1:
+                return True, True, max(0.7, score)
+
     # Synonym matching - check if words are semantically similar
     is_similar, similarity_score = words_are_similar(user_words, expected_words)
     if is_similar:
         return True, True, similarity_score
+
+    # Also check synonyms on significant words only
+    if user_significant and expected_significant:
+        is_similar_sig, similarity_score_sig = words_are_similar(user_significant, expected_significant)
+        if is_similar_sig:
+            return True, True, similarity_score_sig
 
     # Check individual synonym matches (e.g., user says "nice" for expected "friendly")
     for uw in user_words:

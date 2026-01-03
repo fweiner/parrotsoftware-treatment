@@ -60,6 +60,54 @@ const QUESTION_TYPE_NAMES: Record<number, string> = {
   5: 'Name Recall'
 }
 
+// Stop words to filter out when comparing significant words
+const STOP_WORDS = new Set([
+  // Articles
+  'a', 'an', 'the',
+  // Prepositions
+  'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'down',
+  'into', 'onto', 'upon', 'out', 'over', 'under', 'through', 'during',
+  // Conjunctions
+  'and', 'or', 'but', 'so', 'yet', 'nor',
+  // Pronouns
+  'i', 'me', 'my', 'we', 'us', 'our', 'you', 'your', 'he', 'him', 'his',
+  'she', 'her', 'it', 'its', 'they', 'them', 'their', 'who', 'whom',
+  // Common verbs
+  'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am',
+  'do', 'does', 'did', 'doing', 'done',
+  'have', 'has', 'had', 'having',
+  'go', 'goes', 'went', 'going', 'gone',
+  'get', 'gets', 'got', 'getting',
+  'see', 'sees', 'saw', 'seeing', 'seen',
+  'come', 'comes', 'came', 'coming',
+  'take', 'takes', 'took', 'taking', 'taken',
+  'make', 'makes', 'made', 'making',
+  'know', 'knows', 'knew', 'knowing', 'known',
+  'think', 'thinks', 'thought', 'thinking',
+  'say', 'says', 'said', 'saying',
+  'like', 'likes', 'liked', 'liking',
+  'want', 'wants', 'wanted', 'wanting',
+  'can', 'could', 'will', 'would', 'shall', 'should', 'may', 'might', 'must',
+  // Adverbs
+  'very', 'really', 'just', 'also', 'too', 'always', 'never', 'often',
+  'sometimes', 'usually', 'when', 'where', 'why', 'how', 'there', 'here',
+  // Other common words
+  'that', 'this', 'these', 'those', 'what', 'which',
+  'all', 'each', 'every', 'some', 'any', 'no', 'not',
+  'as', 'if', 'then', 'than', 'because', 'while', 'about',
+])
+
+function extractSignificantWords(text: string): Set<string> {
+  const words = new Set(text.toLowerCase().split(/\s+/))
+  const significant = new Set<string>()
+  for (const word of words) {
+    if (!STOP_WORDS.has(word)) {
+      significant.add(word)
+    }
+  }
+  return significant
+}
+
 // Synonym groups for semantic matching
 const SYNONYM_GROUPS: Set<string>[] = [
   // Relationships
@@ -149,11 +197,38 @@ function evaluateAnswer(
     }
   }
 
+  // Extract significant words (filter out stop words like "when", "we", "go", "to")
+  const userSignificant = extractSignificantWords(userLower)
+  const expectedSignificant = extractSignificantWords(expectedLower)
+
+  // Check significant word overlap (e.g., "Connecticut" matches in both)
+  if (userSignificant.size > 0 && expectedSignificant.size > 0) {
+    const significantCommon = [...userSignificant].filter(w => expectedSignificant.has(w))
+    if (significantCommon.length > 0) {
+      const score = significantCommon.length / Math.max(userSignificant.size, expectedSignificant.size)
+      // If any significant word matches, give credit
+      if (score >= 0.3 || significantCommon.length >= 1) {
+        return { isCorrect: true, isPartial: true, score: Math.max(0.7, score) }
+      }
+    }
+  }
+
   // Synonym matching - check if words are semantically similar
   for (const uw of userWords) {
     for (const ew of expectedWords) {
       if (findSynonymMatch(uw, ew)) {
         return { isCorrect: true, isPartial: true, score: 0.7 }
+      }
+    }
+  }
+
+  // Also check synonyms on significant words only
+  if (userSignificant.size > 0 && expectedSignificant.size > 0) {
+    for (const uw of userSignificant) {
+      for (const ew of expectedSignificant) {
+        if (findSynonymMatch(uw, ew)) {
+          return { isCorrect: true, isPartial: true, score: 0.7 }
+        }
       }
     }
   }
