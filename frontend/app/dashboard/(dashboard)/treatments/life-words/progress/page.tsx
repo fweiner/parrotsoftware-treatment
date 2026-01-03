@@ -12,12 +12,16 @@ interface ProgressSummary {
     correct: number
     total: number
     accuracy: number
+    avg_response_time_sec: number
+    avg_speech_confidence: number
   }
   question_practice: {
     sessions: number
     correct: number
     total: number
     accuracy: number
+    avg_response_time_ms: number
+    avg_clarity: number
   }
 }
 
@@ -28,6 +32,9 @@ interface SessionHistory {
   total_incorrect?: number
   total_questions?: number
   accuracy: number
+  avg_response_time?: number
+  avg_cues_used?: number
+  avg_clarity?: number
 }
 
 export default function LifeWordsProgressPage() {
@@ -93,6 +100,12 @@ export default function LifeWordsProgressPage() {
       hour: 'numeric',
       minute: '2-digit'
     })
+  }
+
+  const formatResponseTime = (ms: number) => {
+    if (!ms || ms === 0) return 'N/A'
+    if (ms < 1000) return `${Math.round(ms)}ms`
+    return `${(ms / 1000).toFixed(1)}s`
   }
 
   if (loading) {
@@ -215,18 +228,48 @@ export default function LifeWordsProgressPage() {
                   <span className="font-bold text-lg">{summary?.name_practice.total || 0}</span>
                 </div>
                 <div className="pt-2 border-t">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-700 font-medium">Accuracy</span>
                     <span className="font-bold text-xl text-blue-600">
                       {summary?.name_practice.accuracy || 0}%
                     </span>
                   </div>
-                  <div className="mt-2 bg-gray-200 rounded-full h-3">
+                  <div className="bg-gray-200 rounded-full h-3">
                     <div
                       className="bg-blue-600 h-3 rounded-full transition-all"
                       style={{ width: `${summary?.name_practice.accuracy || 0}%` }}
                     />
                   </div>
+                </div>
+                {/* Response Time */}
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-700 font-medium">Avg Response Time</span>
+                    <span className="font-bold text-lg text-indigo-600">
+                      {summary?.name_practice.avg_response_time_sec
+                        ? `${summary.name_practice.avg_response_time_sec.toFixed(1)}s`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+                {/* Speech Clarity */}
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-700 font-medium">Speech Clarity</span>
+                    <span className="font-bold text-lg text-teal-600">
+                      {summary?.name_practice.avg_speech_confidence
+                        ? `${summary.name_practice.avg_speech_confidence}%`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  {summary?.name_practice.avg_speech_confidence > 0 && (
+                    <div className="bg-gray-200 rounded-full h-3">
+                      <div
+                        className="bg-teal-500 h-3 rounded-full transition-all"
+                        style={{ width: `${summary?.name_practice.avg_speech_confidence || 0}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -253,18 +296,48 @@ export default function LifeWordsProgressPage() {
                   <span className="font-bold text-lg">{summary?.question_practice.total || 0}</span>
                 </div>
                 <div className="pt-2 border-t">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-700 font-medium">Accuracy</span>
                     <span className="font-bold text-xl text-purple-600">
                       {summary?.question_practice.accuracy || 0}%
                     </span>
                   </div>
-                  <div className="mt-2 bg-gray-200 rounded-full h-3">
+                  <div className="bg-gray-200 rounded-full h-3">
                     <div
                       className="bg-purple-600 h-3 rounded-full transition-all"
                       style={{ width: `${summary?.question_practice.accuracy || 0}%` }}
                     />
                   </div>
+                </div>
+                {/* Response Time */}
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-700 font-medium">Avg Response Time</span>
+                    <span className="font-bold text-lg text-indigo-600">
+                      {summary?.question_practice.avg_response_time_ms
+                        ? formatResponseTime(summary.question_practice.avg_response_time_ms)
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+                {/* Speech Clarity */}
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-700 font-medium">Speech Clarity</span>
+                    <span className="font-bold text-lg text-teal-600">
+                      {summary?.question_practice.avg_clarity
+                        ? `${summary.question_practice.avg_clarity}%`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  {summary?.question_practice.avg_clarity > 0 && (
+                    <div className="bg-gray-200 rounded-full h-3">
+                      <div
+                        className="bg-teal-500 h-3 rounded-full transition-all"
+                        style={{ width: `${summary?.question_practice.avg_clarity || 0}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -293,15 +366,37 @@ export default function LifeWordsProgressPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className={`text-xl font-bold ${
-                        session.accuracy >= 80 ? 'text-green-600' :
-                        session.accuracy >= 50 ? 'text-amber-600' : 'text-red-500'
-                      }`}>
-                        {session.accuracy}%
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {session.total_correct} correct
+                    <div className="flex items-center gap-6">
+                      {/* Response time for this session */}
+                      {session.avg_response_time !== undefined && session.avg_response_time > 0 && (
+                        <div className="text-center">
+                          <div className="text-sm text-indigo-600 font-medium">
+                            {session.type === 'name'
+                              ? `${session.avg_response_time.toFixed(1)}s`
+                              : formatResponseTime(session.avg_response_time)}
+                          </div>
+                          <div className="text-xs text-gray-400">time</div>
+                        </div>
+                      )}
+                      {/* Clarity for question sessions */}
+                      {session.type === 'question' && session.avg_clarity !== undefined && session.avg_clarity > 0 && (
+                        <div className="text-center">
+                          <div className="text-sm text-teal-600 font-medium">
+                            {Math.round(session.avg_clarity * 100)}%
+                          </div>
+                          <div className="text-xs text-gray-400">clarity</div>
+                        </div>
+                      )}
+                      <div className="text-right">
+                        <div className={`text-xl font-bold ${
+                          session.accuracy >= 80 ? 'text-green-600' :
+                          session.accuracy >= 50 ? 'text-amber-600' : 'text-red-500'
+                        }`}>
+                          {session.accuracy}%
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {session.total_correct} correct
+                        </div>
                       </div>
                     </div>
                   </div>

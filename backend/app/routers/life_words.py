@@ -422,6 +422,49 @@ async def get_life_words_progress(
         question_correct = sum(1 for r in (question_responses or []) if r.get("is_correct"))
         question_total = len(question_responses) if question_responses else 0
 
+        # Calculate response time stats for name practice
+        name_response_times = [
+            float(r.get("response_time") or 0)
+            for r in (name_responses or [])
+            if r.get("response_time")
+        ]
+        name_avg_response_time = (
+            round(sum(name_response_times) / len(name_response_times), 1)
+            if name_response_times else 0
+        )
+
+        # Calculate response time and clarity stats for question practice
+        question_response_times = [
+            float(r.get("response_time") or 0)
+            for r in (question_responses or [])
+            if r.get("response_time")
+        ]
+        question_avg_response_time = (
+            round(sum(question_response_times) / len(question_response_times), 1)
+            if question_response_times else 0
+        )
+
+        question_clarity_scores = [
+            float(r.get("clarity_score") or 0)
+            for r in (question_responses or [])
+            if r.get("clarity_score") is not None
+        ]
+        question_avg_clarity = (
+            round(sum(question_clarity_scores) / len(question_clarity_scores) * 100, 1)
+            if question_clarity_scores else 0
+        )
+
+        # Calculate speech confidence for name practice
+        name_confidence_scores = [
+            float(r.get("speech_confidence") or 0)
+            for r in (name_responses or [])
+            if r.get("speech_confidence") is not None
+        ]
+        name_avg_confidence = (
+            round(sum(name_confidence_scores) / len(name_confidence_scores) * 100, 1)
+            if name_confidence_scores else 0
+        )
+
         # Build session history for charts (last 20 sessions)
         session_history = []
 
@@ -431,7 +474,9 @@ async def get_life_words_progress(
                 "date": s.get("completed_at"),
                 "total_correct": s.get("total_correct", 0),
                 "total_incorrect": s.get("total_incorrect", 0),
-                "accuracy": round((s.get("total_correct", 0) / max(1, s.get("total_correct", 0) + s.get("total_incorrect", 0))) * 100, 1)
+                "accuracy": round((s.get("total_correct", 0) / max(1, s.get("total_correct", 0) + s.get("total_incorrect", 0))) * 100, 1),
+                "avg_response_time": s.get("average_response_time", 0),
+                "avg_cues_used": s.get("average_cues_used", 0),
             })
 
         for s in (question_sessions or [])[:15]:
@@ -440,7 +485,9 @@ async def get_life_words_progress(
                 "date": s.get("completed_at"),
                 "total_correct": s.get("total_correct", 0),
                 "total_questions": s.get("total_questions", 5),
-                "accuracy": round((s.get("total_correct", 0) / max(1, s.get("total_questions", 5))) * 100, 1)
+                "accuracy": round((s.get("total_correct", 0) / max(1, s.get("total_questions", 5))) * 100, 1),
+                "avg_response_time": s.get("average_response_time", 0),
+                "avg_clarity": s.get("average_clarity_score", 0),
             })
 
         # Sort by date descending
@@ -453,13 +500,17 @@ async def get_life_words_progress(
                     "sessions": total_name_sessions,
                     "correct": name_correct,
                     "total": name_total,
-                    "accuracy": round((name_correct / max(1, name_total)) * 100, 1)
+                    "accuracy": round((name_correct / max(1, name_total)) * 100, 1),
+                    "avg_response_time_sec": name_avg_response_time,
+                    "avg_speech_confidence": name_avg_confidence,
                 },
                 "question_practice": {
                     "sessions": total_question_sessions,
                     "correct": question_correct,
                     "total": question_total,
-                    "accuracy": round((question_correct / max(1, question_total)) * 100, 1)
+                    "accuracy": round((question_correct / max(1, question_total)) * 100, 1),
+                    "avg_response_time_ms": question_avg_response_time,
+                    "avg_clarity": question_avg_clarity,
                 }
             },
             "session_history": session_history[:20]
