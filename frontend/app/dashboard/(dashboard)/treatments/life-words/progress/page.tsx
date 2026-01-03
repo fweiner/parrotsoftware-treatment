@@ -262,7 +262,7 @@ export default function LifeWordsProgressPage() {
                         : 'N/A'}
                     </span>
                   </div>
-                  {summary?.name_practice.avg_speech_confidence > 0 && (
+                  {(summary?.name_practice.avg_speech_confidence ?? 0) > 0 && (
                     <div className="bg-gray-200 rounded-full h-3">
                       <div
                         className="bg-teal-500 h-3 rounded-full transition-all"
@@ -330,7 +330,7 @@ export default function LifeWordsProgressPage() {
                         : 'N/A'}
                     </span>
                   </div>
-                  {summary?.question_practice.avg_clarity > 0 && (
+                  {(summary?.question_practice.avg_clarity ?? 0) > 0 && (
                     <div className="bg-gray-200 rounded-full h-3">
                       <div
                         className="bg-teal-500 h-3 rounded-full transition-all"
