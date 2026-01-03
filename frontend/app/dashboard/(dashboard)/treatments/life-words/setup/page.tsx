@@ -136,7 +136,7 @@ export default function LifeWordsSetupPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Set Up Your Life Words
+              Set Up Your Life Words and Memory
             </h1>
             <p className="text-lg text-gray-600 mt-1">
               Add the people and things that matter most to you.

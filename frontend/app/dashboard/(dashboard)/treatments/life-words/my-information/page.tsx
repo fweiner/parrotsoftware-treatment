@@ -219,7 +219,7 @@ export default function MyInformationPage() {
             href="/dashboard/treatments/life-words"
             className="text-[var(--color-primary)] hover:underline"
           >
-            ← Back to Life Words
+            ← Back to Life Words and Memory
           </Link>
         </div>
 

@@ -159,7 +159,7 @@ export default function DashboardPage() {
             className="flex-1 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold py-4 px-6 rounded-lg text-xl text-center transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2"
             style={{ minHeight: '44px' }}
           >
-            👤 Start Life Words
+            👤 Start Life Words and Memory
           </Link>
 
           <Link
