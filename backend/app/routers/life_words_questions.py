@@ -81,30 +81,114 @@ def generate_questions_for_contacts(contacts: List[Dict[str, Any]]) -> List[Gene
     ))
 
     # Question 5: Name from description (reverse recall)
-    c5 = shuffled[0]
-    relationship = c5["relationship"]
-    hint = c5.get("interests") or c5.get("description") or c5.get("personality") or "is special to you"
-    questions.append(GeneratedQuestion(
-        contact_id=c5["id"],
-        contact_name=c5["name"],
-        contact_photo_url=c5["photo_url"],
-        question_type=QuestionType.NAME_FROM_DESC,
-        question_text=f"Who is your {relationship} who {hint}?",
-        expected_answer=c5["name"],
-        acceptable_answers=[
-            c5["name"].lower(),
-            c5["name"].split()[0].lower() if " " in c5["name"] else c5["name"].lower(),
-            c5.get("nickname", "").lower() if c5.get("nickname") else ""
-        ]
-    ))
+    # Find a contact with meaningful hint data
+    c5 = None
+    hint = None
+    for contact in shuffled:
+        possible_hint = contact.get("interests") or contact.get("description") or contact.get("personality")
+        if possible_hint:
+            c5 = contact
+            hint = possible_hint
+            break
+
+    # Only add this question if we have a meaningful hint
+    if c5 and hint:
+        relationship = c5["relationship"]
+        # Format the hint to work grammatically (e.g., "loves gardening" or "is kind")
+        if not hint.startswith(("loves", "enjoys", "likes", "is")):
+            hint = f"loves {hint}"
+        questions.append(GeneratedQuestion(
+            contact_id=c5["id"],
+            contact_name=c5["name"],
+            contact_photo_url=c5["photo_url"],
+            question_type=QuestionType.NAME_FROM_DESC,
+            question_text=f"Who is your {relationship} who {hint}?",
+            expected_answer=c5["name"],
+            acceptable_answers=[
+                c5["name"].lower(),
+                c5["name"].split()[0].lower() if " " in c5["name"] else c5["name"].lower(),
+                c5.get("nickname", "").lower() if c5.get("nickname") else ""
+            ]
+        ))
 
     return questions
+
+
+# Synonym groups for semantic matching
+SYNONYM_GROUPS = [
+    # Relationships
+    {"daughter", "girl", "child", "kid"},
+    {"son", "boy", "child", "kid"},
+    {"spouse", "husband", "wife", "partner"},
+    {"grandchild", "grandkid", "grandson", "granddaughter"},
+    {"parent", "mom", "dad", "mother", "father"},
+    {"sibling", "brother", "sister"},
+    {"friend", "buddy", "pal", "companion"},
+    {"caregiver", "helper", "aide", "nurse"},
+    # Personality traits
+    {"outgoing", "social", "extroverted", "friendly", "sociable", "talkative"},
+    {"reserved", "quiet", "shy", "introverted", "private"},
+    {"optimistic", "positive", "cheerful", "upbeat", "hopeful"},
+    {"cautious", "careful", "prudent", "wary"},
+    {"friendly", "kind", "nice", "warm", "caring", "loving", "sweet"},
+    {"energetic", "active", "lively", "spirited", "dynamic"},
+    {"calm", "peaceful", "relaxed", "mellow", "easygoing", "laid back"},
+    {"funny", "humorous", "witty", "hilarious", "comedic"},
+    {"smart", "intelligent", "clever", "bright", "wise"},
+    {"generous", "giving", "charitable", "kind"},
+    {"patient", "understanding", "tolerant"},
+    {"hardworking", "diligent", "dedicated", "industrious"},
+    # Locations
+    {"home", "house", "my place", "their place", "residence"},
+    {"church", "temple", "synagogue", "mosque", "place of worship"},
+    {"work", "office", "job", "workplace"},
+    {"school", "class", "college", "university"},
+    {"park", "playground", "outside", "outdoors"},
+    {"store", "shop", "market", "mall"},
+    {"restaurant", "diner", "cafe", "eatery"},
+    {"hospital", "clinic", "doctor", "medical"},
+]
+
+
+def find_synonym_match(word1: str, word2: str) -> bool:
+    """Check if two words are synonyms based on our groups."""
+    w1 = word1.lower().strip()
+    w2 = word2.lower().strip()
+
+    for group in SYNONYM_GROUPS:
+        if w1 in group and w2 in group:
+            return True
+    return False
+
+
+def words_are_similar(user_words: set, expected_words: set) -> tuple[bool, float]:
+    """Check if word sets are semantically similar using synonyms."""
+    if not user_words or not expected_words:
+        return False, 0.0
+
+    matches = 0
+    for uw in user_words:
+        for ew in expected_words:
+            if uw == ew or find_synonym_match(uw, ew):
+                matches += 1
+                break
+
+    # Calculate similarity score
+    score = matches / max(len(user_words), len(expected_words))
+    return score >= 0.5, score
 
 
 def evaluate_answer(user_answer: str, expected: str, acceptable: List[str]) -> tuple[bool, bool, float]:
     """
     Evaluate if user's answer matches expected.
     Returns (is_correct, is_partial, correctness_score)
+
+    Matching strategies (in order):
+    1. Exact match
+    2. Acceptable alternatives
+    3. Substring containment
+    4. Word overlap
+    5. Synonym matching (e.g., "friendly" matches "kind")
     """
     if not user_answer:
         return False, False, 0.0
@@ -125,14 +209,26 @@ def evaluate_answer(user_answer: str, expected: str, acceptable: List[str]) -> t
     if expected_lower in user_lower or user_lower in expected_lower:
         return True, True, 0.8
 
-    # Check if any word matches
+    # Check if any word matches exactly
     user_words = set(user_lower.split())
     expected_words = set(expected_lower.split())
     common = user_words & expected_words
 
     if common:
         score = len(common) / max(len(user_words), len(expected_words))
-        return score >= 0.5, True, score
+        if score >= 0.5:
+            return True, True, score
+
+    # Synonym matching - check if words are semantically similar
+    is_similar, similarity_score = words_are_similar(user_words, expected_words)
+    if is_similar:
+        return True, True, similarity_score
+
+    # Check individual synonym matches (e.g., user says "nice" for expected "friendly")
+    for uw in user_words:
+        for ew in expected_words:
+            if find_synonym_match(uw, ew):
+                return True, True, 0.7
 
     return False, False, 0.0
 

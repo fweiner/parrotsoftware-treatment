@@ -60,6 +60,53 @@ const QUESTION_TYPE_NAMES: Record<number, string> = {
   5: 'Name Recall'
 }
 
+// Synonym groups for semantic matching
+const SYNONYM_GROUPS: Set<string>[] = [
+  // Relationships
+  new Set(['daughter', 'girl', 'child', 'kid']),
+  new Set(['son', 'boy', 'child', 'kid']),
+  new Set(['spouse', 'husband', 'wife', 'partner']),
+  new Set(['grandchild', 'grandkid', 'grandson', 'granddaughter']),
+  new Set(['parent', 'mom', 'dad', 'mother', 'father']),
+  new Set(['sibling', 'brother', 'sister']),
+  new Set(['friend', 'buddy', 'pal', 'companion']),
+  new Set(['caregiver', 'helper', 'aide', 'nurse']),
+  // Personality traits
+  new Set(['outgoing', 'social', 'extroverted', 'friendly', 'sociable', 'talkative']),
+  new Set(['reserved', 'quiet', 'shy', 'introverted', 'private']),
+  new Set(['optimistic', 'positive', 'cheerful', 'upbeat', 'hopeful']),
+  new Set(['cautious', 'careful', 'prudent', 'wary']),
+  new Set(['friendly', 'kind', 'nice', 'warm', 'caring', 'loving', 'sweet']),
+  new Set(['energetic', 'active', 'lively', 'spirited', 'dynamic']),
+  new Set(['calm', 'peaceful', 'relaxed', 'mellow', 'easygoing', 'laid back']),
+  new Set(['funny', 'humorous', 'witty', 'hilarious', 'comedic']),
+  new Set(['smart', 'intelligent', 'clever', 'bright', 'wise']),
+  new Set(['generous', 'giving', 'charitable', 'kind']),
+  new Set(['patient', 'understanding', 'tolerant']),
+  new Set(['hardworking', 'diligent', 'dedicated', 'industrious']),
+  // Locations
+  new Set(['home', 'house', 'my place', 'their place', 'residence']),
+  new Set(['church', 'temple', 'synagogue', 'mosque', 'place of worship']),
+  new Set(['work', 'office', 'job', 'workplace']),
+  new Set(['school', 'class', 'college', 'university']),
+  new Set(['park', 'playground', 'outside', 'outdoors']),
+  new Set(['store', 'shop', 'market', 'mall']),
+  new Set(['restaurant', 'diner', 'cafe', 'eatery']),
+  new Set(['hospital', 'clinic', 'doctor', 'medical']),
+]
+
+function findSynonymMatch(word1: string, word2: string): boolean {
+  const w1 = word1.toLowerCase().trim()
+  const w2 = word2.toLowerCase().trim()
+
+  for (const group of SYNONYM_GROUPS) {
+    if (group.has(w1) && group.has(w2)) {
+      return true
+    }
+  }
+  return false
+}
+
 // Evaluate user answer against expected
 function evaluateAnswer(
   userAnswer: string,
@@ -90,14 +137,25 @@ function evaluateAnswer(
     return { isCorrect: true, isPartial: true, score: 0.8 }
   }
 
-  // Check if any word matches
+  // Check if any word matches exactly
   const userWords = new Set(userLower.split(/\s+/))
   const expectedWords = new Set(expectedLower.split(/\s+/))
   const common = [...userWords].filter(w => expectedWords.has(w))
 
   if (common.length > 0) {
     const score = common.length / Math.max(userWords.size, expectedWords.size)
-    return { isCorrect: score >= 0.5, isPartial: true, score }
+    if (score >= 0.5) {
+      return { isCorrect: true, isPartial: true, score }
+    }
+  }
+
+  // Synonym matching - check if words are semantically similar
+  for (const uw of userWords) {
+    for (const ew of expectedWords) {
+      if (findSynonymMatch(uw, ew)) {
+        return { isCorrect: true, isPartial: true, score: 0.7 }
+      }
+    }
   }
 
   return { isCorrect: false, isPartial: false, score: 0 }

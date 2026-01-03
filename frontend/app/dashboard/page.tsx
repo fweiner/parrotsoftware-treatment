@@ -47,7 +47,7 @@ export default function DashboardPage() {
           Welcome back{user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name}` : ''}!
         </h1>
         <p className="text-xl text-gray-700">
-          Ready to continue your cognitive therapy journey?
+          Ready to continue your recovery journey?
         </p>
       </div>
 
@@ -140,35 +140,12 @@ export default function DashboardPage() {
                   Practice remembering grocery lists with adjustable difficulty.
                 </p>
                 <span className="inline-block bg-[var(--color-primary)] text-white px-4 py-2 rounded-full text-base font-semibold">
-                  Start Now
+                  Start Now →
                 </span>
               </div>
             </div>
           </Link>
 
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-md p-8">
-        <h2 className="text-2xl font-bold mb-6">Quick Actions</h2>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link
-            href="/dashboard/treatments/life-words"
-            className="flex-1 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold py-4 px-6 rounded-lg text-xl text-center transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-            style={{ minHeight: '44px' }}
-          >
-            👤 Start Life Words and Memory
-          </Link>
-
-          <Link
-            href="/dashboard/progress"
-            className="flex-1 bg-[var(--color-accent)] hover:bg-blue-400 text-white font-semibold py-4 px-6 rounded-lg text-xl text-center transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-accent)] focus:ring-offset-2"
-            style={{ minHeight: '44px' }}
-          >
-            📊 View Progress
-          </Link>
         </div>
       </div>
     </div>
