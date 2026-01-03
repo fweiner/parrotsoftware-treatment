@@ -280,7 +280,16 @@ export default function LifeWordsPage() {
             </div>
 
             {/* Secondary Actions - Icon Grid */}
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="mt-8 grid grid-cols-3 sm:grid-cols-5 gap-4">
+              <Link
+                href="/dashboard/treatments/life-words/progress"
+                title="View your progress and statistics"
+                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-green-50 border-2 border-gray-200 hover:border-green-300 transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
+              >
+                <span className="text-3xl mb-2">📊</span>
+                <span className="text-base font-semibold text-gray-700">Progress</span>
+              </Link>
+
               <Link
                 href="/dashboard/treatments/life-words/messages"
                 title="View messages from family and caregivers"

@@ -375,6 +375,101 @@ async def save_life_words_response(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/progress")
+async def get_life_words_progress(
+    user_id: CurrentUserId,
+    db: Database
+) -> Dict[str, Any]:
+    """Get user's life words progress statistics."""
+    try:
+        # Get all completed name practice sessions
+        name_sessions = await db.query(
+            "life_words_sessions",
+            select="*",
+            filters={"user_id": user_id, "is_completed": True},
+            order="completed_at.desc"
+        )
+
+        # Get all completed question sessions
+        question_sessions = await db.query(
+            "life_words_question_sessions",
+            select="*",
+            filters={"user_id": user_id, "is_completed": True},
+            order="completed_at.desc"
+        )
+
+        # Get all name practice responses
+        name_responses = await db.query(
+            "life_words_responses",
+            select="*",
+            filters={"user_id": user_id}
+        )
+
+        # Get all question responses
+        question_responses = await db.query(
+            "life_words_question_responses",
+            select="*",
+            filters={"user_id": user_id}
+        )
+
+        # Calculate overall stats
+        total_name_sessions = len(name_sessions) if name_sessions else 0
+        total_question_sessions = len(question_sessions) if question_sessions else 0
+
+        name_correct = sum(1 for r in (name_responses or []) if r.get("is_correct"))
+        name_total = len(name_responses) if name_responses else 0
+
+        question_correct = sum(1 for r in (question_responses or []) if r.get("is_correct"))
+        question_total = len(question_responses) if question_responses else 0
+
+        # Build session history for charts (last 20 sessions)
+        session_history = []
+
+        for s in (name_sessions or [])[:15]:
+            session_history.append({
+                "type": "name",
+                "date": s.get("completed_at"),
+                "total_correct": s.get("total_correct", 0),
+                "total_incorrect": s.get("total_incorrect", 0),
+                "accuracy": round((s.get("total_correct", 0) / max(1, s.get("total_correct", 0) + s.get("total_incorrect", 0))) * 100, 1)
+            })
+
+        for s in (question_sessions or [])[:15]:
+            session_history.append({
+                "type": "question",
+                "date": s.get("completed_at"),
+                "total_correct": s.get("total_correct", 0),
+                "total_questions": s.get("total_questions", 5),
+                "accuracy": round((s.get("total_correct", 0) / max(1, s.get("total_questions", 5))) * 100, 1)
+            })
+
+        # Sort by date descending
+        session_history.sort(key=lambda x: x.get("date") or "", reverse=True)
+
+        return {
+            "summary": {
+                "total_sessions": total_name_sessions + total_question_sessions,
+                "name_practice": {
+                    "sessions": total_name_sessions,
+                    "correct": name_correct,
+                    "total": name_total,
+                    "accuracy": round((name_correct / max(1, name_total)) * 100, 1)
+                },
+                "question_practice": {
+                    "sessions": total_question_sessions,
+                    "correct": question_correct,
+                    "total": question_total,
+                    "accuracy": round((question_correct / max(1, question_total)) * 100, 1)
+                }
+            },
+            "session_history": session_history[:20]
+        }
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.put("/sessions/{session_id}/complete")
 async def complete_life_words_session(
     session_id: str,
