@@ -156,7 +156,7 @@ export default function LifeWordsPage() {
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-md p-8">
         <h1 className="text-4xl font-bold mb-4 text-[var(--color-primary)]">
-          Find My Life Words
+          My Life Words and Memory
         </h1>
         <p className="text-xl text-gray-700 mb-8">
           Practice naming the people, pets, and things that matter most to you.
@@ -252,37 +252,14 @@ export default function LifeWordsPage() {
               Start a session to practice naming them!
             </p>
 
-            <div className="bg-white rounded-lg p-6 mb-6 text-left">
-              <h3 className="text-2xl font-bold mb-4 text-gray-900">
-                How it works:
-              </h3>
-              <ul className="space-y-3 text-lg text-gray-700">
-                <li className="flex items-start">
-                  <span className="text-[var(--color-primary)] mr-3 text-2xl">1.</span>
-                  <span>You'll see photos of your people and things</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[var(--color-primary)] mr-3 text-2xl">2.</span>
-                  <span>Try to name who or what you see within 30 seconds</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[var(--color-primary)] mr-3 text-2xl">3.</span>
-                  <span>If you need help, personalized cues are available</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[var(--color-primary)] mr-3 text-2xl">4.</span>
-                  <span>Your progress is tracked automatically</span>
-                </li>
-              </ul>
-            </div>
-
             {error && (
               <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 mb-6">
                 <p className="text-red-700 text-lg font-semibold">Error: {error}</p>
               </div>
             )}
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
+            {/* Primary Practice Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={handleStartSession}
                 disabled={isStarting}
@@ -300,38 +277,45 @@ export default function LifeWordsPage() {
               >
                 {isStarting ? 'Starting...' : 'Question Practice'}
               </button>
+            </div>
 
+            {/* Secondary Actions - Icon Grid */}
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Link
                 href="/dashboard/treatments/life-words/messages"
-                className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 inline-flex items-center justify-center gap-2"
-                style={{ minHeight: '44px' }}
+                title="View messages from family and caregivers"
+                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
-                Messages
+                <span className="text-3xl mb-2">💬</span>
+                <span className="text-base font-semibold text-gray-700">Messages</span>
                 <UnreadBadge />
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/contacts"
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-block text-center"
-                style={{ minHeight: '44px' }}
+                title="Add or edit your contacts"
+                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
               >
-                Manage Contacts
+                <span className="text-3xl mb-2">👥</span>
+                <span className="text-base font-semibold text-gray-700">Contacts</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/my-information"
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-block text-center"
-                style={{ minHeight: '44px' }}
+                title="Update your personal information"
+                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
               >
-                My Information
+                <span className="text-3xl mb-2">ℹ️</span>
+                <span className="text-base font-semibold text-gray-700">My Info</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/items"
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-block text-center"
-                style={{ minHeight: '44px' }}
+                title="Manage your items and belongings"
+                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
               >
-                My Stuff
+                <span className="text-3xl mb-2">📦</span>
+                <span className="text-base font-semibold text-gray-700">My Stuff</span>
               </Link>
             </div>
           </div>

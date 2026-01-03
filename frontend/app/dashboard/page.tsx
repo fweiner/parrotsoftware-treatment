@@ -104,7 +104,7 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          {/* Find My Life Words - Active */}
+          {/* My Life Words and Memory - Active */}
           <Link
             href="/dashboard/treatments/life-words"
             className="block p-6 border-2 border-[var(--color-primary)] rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2"
@@ -113,7 +113,7 @@ export default function DashboardPage() {
               <div className="text-5xl">👤</div>
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-[var(--color-primary)] mb-2">
-                  Find My Life Words
+                  My Life Words and Memory
                 </h3>
                 <p className="text-lg text-gray-700 mb-3">
                   Practice naming the people, pets, and things that matter most to you.
