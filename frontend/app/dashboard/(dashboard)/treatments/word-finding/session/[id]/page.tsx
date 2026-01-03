@@ -10,6 +10,7 @@ import Timer from '@/components/word-finding/Timer'
 import SessionProgress from '@/components/word-finding/SessionProgress'
 import { matchAnswer, extractAnswer } from '@/lib/matching/answerMatcher'
 import { speak, waitForVoices } from '@/lib/utils/textToSpeech'
+import { useVoicePreference } from '@/hooks/useVoicePreference'
 import { getRandomPositiveFeedback } from '@/lib/utils/positiveFeedback'
 
 const TIMER_DURATION = 30 // seconds
@@ -52,6 +53,7 @@ export default function WordFindingSessionPage() {
   const params = useParams()
   const sessionId = params.id as string
   const supabase = createClient()
+  const voiceGender = useVoicePreference()
 
   const [session, setSession] = useState<Session | null>(null)
   const [stimuli, setStimuli] = useState<Stimulus[]>([])
@@ -252,7 +254,7 @@ export default function WordFindingSessionPage() {
     // Play success feedback with random positive message
     try {
       const feedbackMessage = getRandomPositiveFeedback()
-      await speak(feedbackMessage)
+      await speak(feedbackMessage, { gender: voiceGender })
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }
@@ -293,7 +295,7 @@ export default function WordFindingSessionPage() {
       // All cues exhausted (cuesUsed >= 7) - save as incorrect and move to next
       await saveResponse(false, null)
       try {
-        await speak(`The name of this object is ${currentStimulus.name}`)
+        await speak(`The name of this object is ${currentStimulus.name}`, { gender: voiceGender })
       } catch (speakError: any) {
         console.warn('Text-to-speech failed:', speakError?.message || speakError)
       }
@@ -309,7 +311,7 @@ export default function WordFindingSessionPage() {
       await saveResponse(true, userAnswer, cuesUsed + 1)
       try {
         const feedbackMessage = getRandomPositiveFeedback()
-        await speak(feedbackMessage)
+        await speak(feedbackMessage, { gender: voiceGender })
       } catch (speakError: any) {
         console.warn('Text-to-speech failed:', speakError?.message || speakError)
       }
@@ -422,7 +424,7 @@ export default function WordFindingSessionPage() {
     setIsWaitingForNext(false) // Reset waiting state - show button again
 
     try {
-      await speak(`What do you see in this picture?`)
+      await speak(`What do you see in this picture?`, { gender: voiceGender })
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }
@@ -525,7 +527,7 @@ export default function WordFindingSessionPage() {
                       try {
                         console.log('First image displayed - attempting to speak prompt')
                         await waitForVoices()
-                        await speak(`What do you see in this picture?`)
+                        await speak(`What do you see in this picture?`, { gender: voiceGender })
                         hasSpokenFirstPromptRef.current = true
                         setHasSpokenFirstPrompt(true)
                         console.log('Successfully spoke prompt when image displayed')
@@ -562,7 +564,7 @@ export default function WordFindingSessionPage() {
                     try {
                       console.log('First image - speaking "What do you see in this picture?"')
                       await waitForVoices()
-                      await speak(`What do you see in this picture?`)
+                      await speak(`What do you see in this picture?`, { gender: voiceGender })
                       hasSpokenFirstPromptRef.current = true
                       setHasSpokenFirstPrompt(true)
                       console.log('Successfully spoke prompt for first image')
@@ -583,6 +585,7 @@ export default function WordFindingSessionPage() {
                   setIsAnswering(true)
                   setTimer(TIMER_DURATION)
                 }}
+                voiceGender={voiceGender}
               />
             )}
           </>

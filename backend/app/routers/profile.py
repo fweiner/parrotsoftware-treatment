@@ -84,6 +84,9 @@ async def update_profile(
         update_data["favorite_food"] = profile_data.favorite_food
     if profile_data.favorite_music is not None:
         update_data["favorite_music"] = profile_data.favorite_music
+    # Voice preference
+    if profile_data.voice_gender is not None:
+        update_data["voice_gender"] = profile_data.voice_gender
 
     if not update_data:
         # No changes, return current profile

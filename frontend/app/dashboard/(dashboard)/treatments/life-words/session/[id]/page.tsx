@@ -7,6 +7,7 @@ import Image from 'next/image'
 import SpeechRecognitionButton from '@/components/word-finding/SpeechRecognitionButton'
 import { PersonalizedCueSystem } from '@/components/life-words/PersonalizedCueSystem'
 import { speak, waitForVoices } from '@/lib/utils/textToSpeech'
+import { useVoicePreference } from '@/hooks/useVoicePreference'
 import { getRandomPositiveFeedback } from '@/lib/utils/positiveFeedback'
 
 interface PersonalContact {
@@ -61,6 +62,7 @@ export default function LifeWordsSessionPage() {
   const params = useParams()
   const sessionId = params.id as string
   const supabase = createClient()
+  const voiceGender = useVoicePreference()
 
   const [session, setSession] = useState<Session | null>(null)
   const [contacts, setContacts] = useState<PersonalContact[]>([])
@@ -181,7 +183,7 @@ export default function LifeWordsSessionPage() {
 
     try {
       const feedbackMessage = getRandomPositiveFeedback()
-      await speak(feedbackMessage)
+      await speak(feedbackMessage, { gender: voiceGender })
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }
@@ -199,7 +201,7 @@ export default function LifeWordsSessionPage() {
       await saveResponse(true, userAnswer, cuesUsed + 1)
       try {
         const feedbackMessage = getRandomPositiveFeedback()
-        await speak(feedbackMessage)
+        await speak(feedbackMessage, { gender: voiceGender })
       } catch (speakError: any) {
         console.warn('Text-to-speech failed:', speakError?.message || speakError)
       }
@@ -273,7 +275,7 @@ export default function LifeWordsSessionPage() {
     setIsWaitingForNext(false)
 
     try {
-      await speak(`The person in this picture is...`)
+      await speak(`The person in this picture is...`, { gender: voiceGender })
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }
@@ -384,7 +386,7 @@ export default function LifeWordsSessionPage() {
                     if (!hasSpokenFirstPromptRef.current) {
                       try {
                         await waitForVoices()
-                        await speak(`The person in this picture is...`)
+                        await speak(`The person in this picture is...`, { gender: voiceGender })
                         hasSpokenFirstPromptRef.current = true
                         setHasSpokenFirstPrompt(true)
                       } catch (error: any) {
@@ -422,7 +424,7 @@ export default function LifeWordsSessionPage() {
                 if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
                   try {
                     await waitForVoices()
-                    await speak(`The person in this picture is...`)
+                    await speak(`The person in this picture is...`, { gender: voiceGender })
                     hasSpokenFirstPromptRef.current = true
                     setHasSpokenFirstPrompt(true)
                   } catch (error: any) {
@@ -440,6 +442,7 @@ export default function LifeWordsSessionPage() {
               onContinue={() => {
                 setIsAnswering(true)
               }}
+              voiceGender={voiceGender}
             />
           )}
 

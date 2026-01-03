@@ -7,6 +7,7 @@ import Link from 'next/link'
 export default function SettingsPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [voiceGender, setVoiceGender] = useState<'male' | 'female' | 'neutral'>('female')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -38,6 +39,7 @@ export default function SettingsPage() {
       if (response.ok) {
         const profile = await response.json()
         setFullName(profile.full_name || '')
+        setVoiceGender(profile.voice_gender || 'female')
       }
     } catch (err) {
       console.error('Error loading profile:', err)
@@ -66,7 +68,7 @@ export default function SettingsPage() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ full_name: fullName })
+        body: JSON.stringify({ full_name: fullName, voice_gender: voiceGender })
       })
 
       if (!response.ok) {
@@ -162,6 +164,41 @@ export default function SettingsPage() {
           <p className="mt-2 text-sm text-gray-500">
             This name is used when sending invites to contacts
           </p>
+        </div>
+
+        <div>
+          <label className="block text-lg font-medium mb-2">
+            Voice Preference
+          </label>
+          <p className="text-sm text-gray-500 mb-3">
+            Choose the voice used when the app speaks to you
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <label className={`flex items-center justify-center px-6 py-4 border-2 rounded-lg cursor-pointer transition-colors ${voiceGender === 'female' ? 'border-[var(--color-primary)] bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}>
+              <input
+                type="radio"
+                name="voiceGender"
+                value="female"
+                checked={voiceGender === 'female'}
+                onChange={(e) => setVoiceGender(e.target.value as 'female')}
+                className="sr-only"
+              />
+              <span className="text-2xl mr-3">👩</span>
+              <span className="text-lg font-medium">Female Voice</span>
+            </label>
+            <label className={`flex items-center justify-center px-6 py-4 border-2 rounded-lg cursor-pointer transition-colors ${voiceGender === 'male' ? 'border-[var(--color-primary)] bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}>
+              <input
+                type="radio"
+                name="voiceGender"
+                value="male"
+                checked={voiceGender === 'male'}
+                onChange={(e) => setVoiceGender(e.target.value as 'male')}
+                className="sr-only"
+              />
+              <span className="text-2xl mr-3">👨</span>
+              <span className="text-lg font-medium">Male Voice</span>
+            </label>
+          </div>
         </div>
 
         <button

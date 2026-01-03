@@ -53,6 +53,8 @@ class ProfileUpdate(BaseModel):
     number_of_children: Optional[int] = None
     favorite_food: Optional[str] = None
     favorite_music: Optional[str] = None
+    # Voice preference
+    voice_gender: Optional[str] = None  # 'male', 'female', or 'neutral'
 
 
 class ProfileResponse(BaseModel):
@@ -76,6 +78,8 @@ class ProfileResponse(BaseModel):
     number_of_children: Optional[int] = None
     favorite_food: Optional[str] = None
     favorite_music: Optional[str] = None
+    # Voice preference
+    voice_gender: Optional[str] = None  # 'male', 'female', or 'neutral'
     created_at: datetime
     updated_at: datetime
 

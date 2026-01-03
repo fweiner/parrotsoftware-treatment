@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { speak, waitForVoices } from '@/lib/utils/textToSpeech'
+import { speak, waitForVoices, type VoiceGender } from '@/lib/utils/textToSpeech'
 import SpeechRecognitionButton from '@/components/word-finding/SpeechRecognitionButton'
 
 interface PersonalContact {
@@ -27,6 +27,7 @@ interface PersonalizedCueSystemProps {
   onAnswer: (answer: string, isCorrect: boolean) => void
   onFinalAnswer: () => void
   onContinue: () => void
+  voiceGender?: VoiceGender
 }
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
@@ -184,6 +185,7 @@ export function PersonalizedCueSystem({
   onAnswer,
   onFinalAnswer,
   onContinue,
+  voiceGender = 'female',
 }: PersonalizedCueSystemProps) {
   const CUE_TYPES = getCueTypes(contact)
   const [currentCueLevel, setCurrentCueLevel] = useState(cuesUsed + 1)
@@ -257,7 +259,7 @@ export function PersonalizedCueSystem({
           return
         }
 
-        await speak(text)
+        await speak(text, { gender: voiceGender })
 
         if (speechOperation.cancelled || currentSpeechRef.current !== speechOperation) {
           return
@@ -298,7 +300,7 @@ export function PersonalizedCueSystem({
     setHasSpoken(false)
 
     try {
-      await speak(`This is ${contact.name}`)
+      await speak(`This is ${contact.name}`, { gender: voiceGender })
     } catch (error) {
       console.warn('Failed to speak final answer:', error)
     }

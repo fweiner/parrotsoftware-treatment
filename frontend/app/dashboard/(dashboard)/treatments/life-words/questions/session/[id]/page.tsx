@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase'
 import Image from 'next/image'
 import SpeechRecognitionButton from '@/components/word-finding/SpeechRecognitionButton'
 import { speak, waitForVoices } from '@/lib/utils/textToSpeech'
+import { useVoicePreference } from '@/hooks/useVoicePreference'
 import { getRandomPositiveFeedback } from '@/lib/utils/positiveFeedback'
 
 interface PersonalContact {
@@ -107,6 +108,7 @@ export default function LifeWordsQuestionSessionPage() {
   const params = useParams()
   const sessionId = params.id as string
   const supabase = createClient()
+  const voiceGender = useVoicePreference()
 
   // Session state
   const [session, setSession] = useState<QuestionSession | null>(null)
@@ -293,7 +295,7 @@ export default function LifeWordsQuestionSessionPage() {
       // Speak the next answer
       const nextQ = questions[nextIndex]
       try {
-        await speak(`${nextQ.question_text} The answer is: ${nextQ.expected_answer}`)
+        await speak(`${nextQ.question_text} The answer is: ${nextQ.expected_answer}`, { gender: voiceGender })
       } catch (e) {
         console.warn('TTS failed:', e)
       }
@@ -318,7 +320,7 @@ export default function LifeWordsQuestionSessionPage() {
     questionStartTimeRef.current = startTime
 
     try {
-      await speak("Now let's see what you remember. " + firstQuestion.question_text)
+      await speak("Now let's see what you remember. " + firstQuestion.question_text, { gender: voiceGender })
     } catch (e) {
       console.warn('TTS failed:', e)
     }
@@ -331,7 +333,7 @@ export default function LifeWordsQuestionSessionPage() {
         try {
           await waitForVoices()
           const q = questions[0]
-          await speak(`${q.question_text} The answer is: ${q.expected_answer}`)
+          await speak(`${q.question_text} The answer is: ${q.expected_answer}`, { gender: voiceGender })
         } catch (e) {
           console.warn('TTS failed:', e)
         }
@@ -378,9 +380,9 @@ export default function LifeWordsQuestionSessionPage() {
       // Speak feedback
       if (evaluation.isCorrect) {
         const feedback = getRandomPositiveFeedback()
-        await speak(feedback)
+        await speak(feedback, { gender: voiceGender })
       } else {
-        await speak(`The answer was ${currentQ.expected_answer}`)
+        await speak(`The answer was ${currentQ.expected_answer}`, { gender: voiceGender })
       }
 
       // Move to next after delay
@@ -468,7 +470,7 @@ export default function LifeWordsQuestionSessionPage() {
     setIsAnswering(true)
 
     try {
-      await speak(nextQuestion.question_text)
+      await speak(nextQuestion.question_text, { gender: voiceGender })
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }

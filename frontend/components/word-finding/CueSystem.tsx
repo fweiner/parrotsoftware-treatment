@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { speak, waitForVoices } from '@/lib/utils/textToSpeech'
+import { speak, waitForVoices, type VoiceGender } from '@/lib/utils/textToSpeech'
 import { matchAnswer, extractAnswer } from '@/lib/matching/answerMatcher'
 import SpeechRecognitionButton from './SpeechRecognitionButton'
 
@@ -23,6 +23,7 @@ interface CueSystemProps {
   onAnswer: (answer: string, isCorrect: boolean) => void
   onFinalAnswer: () => void
   onContinue: () => void
+  voiceGender?: VoiceGender
 }
 
 const CUE_TYPES = [
@@ -41,6 +42,7 @@ export default function CueSystem({
   onAnswer,
   onFinalAnswer,
   onContinue,
+  voiceGender = 'female',
 }: CueSystemProps) {
   const [currentCueLevel, setCurrentCueLevel] = useState(cuesUsed + 1)
   const [cueText, setCueText] = useState('')
@@ -152,7 +154,7 @@ export default function CueSystem({
         }
 
         // Now speak the cue (this will cancel any previous speech)
-        await speak(text)
+        await speak(text, { gender: voiceGender })
 
         // Check if cancelled after speaking
         if (speechOperation.cancelled || currentSpeechRef.current !== speechOperation) {
@@ -244,7 +246,7 @@ export default function CueSystem({
 
     // Speak the answer only once
     try {
-      await speak(`The name of this object is ${stimulus.name}`)
+      await speak(`The name of this object is ${stimulus.name}`, { gender: voiceGender })
     } catch (error) {
       console.warn('Failed to speak final answer:', error)
     }
