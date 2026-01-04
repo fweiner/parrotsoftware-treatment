@@ -55,6 +55,13 @@ class ProfileUpdate(BaseModel):
     favorite_music: Optional[str] = None
     # Voice preference
     voice_gender: Optional[str] = None  # 'male', 'female', or 'neutral'
+    # Answer matching accommodations
+    match_acceptable_alternatives: Optional[bool] = None
+    match_partial_substring: Optional[bool] = None
+    match_word_overlap: Optional[bool] = None
+    match_stop_word_filtering: Optional[bool] = None
+    match_synonyms: Optional[bool] = None
+    match_first_name_only: Optional[bool] = None
 
 
 class ProfileResponse(BaseModel):
@@ -80,6 +87,13 @@ class ProfileResponse(BaseModel):
     favorite_music: Optional[str] = None
     # Voice preference
     voice_gender: Optional[str] = None  # 'male', 'female', or 'neutral'
+    # Answer matching accommodations
+    match_acceptable_alternatives: Optional[bool] = True
+    match_partial_substring: Optional[bool] = True
+    match_word_overlap: Optional[bool] = True
+    match_stop_word_filtering: Optional[bool] = True
+    match_synonyms: Optional[bool] = True
+    match_first_name_only: Optional[bool] = True
     created_at: datetime
     updated_at: datetime
 

@@ -222,76 +222,107 @@ def words_are_similar(user_words: set, expected_words: set) -> tuple[bool, float
     return score >= 0.5, score
 
 
-def evaluate_answer(user_answer: str, expected: str, acceptable: List[str]) -> tuple[bool, bool, float]:
+def evaluate_answer(
+    user_answer: str,
+    expected: str,
+    acceptable: List[str],
+    settings: dict = None
+) -> tuple[bool, bool, float]:
     """
     Evaluate if user's answer matches expected.
     Returns (is_correct, is_partial, correctness_score)
 
-    Matching strategies (in order):
-    1. Exact match
-    2. Acceptable alternatives
-    3. Substring containment
-    4. Word overlap
-    5. Synonym matching (e.g., "friendly" matches "kind")
+    Matching strategies (in order, can be toggled via settings):
+    1. Exact match (always enabled)
+    2. Acceptable alternatives (match_acceptable_alternatives)
+    3. First name only (match_first_name_only) - part of acceptable alternatives
+    4. Substring containment (match_partial_substring)
+    5. Word overlap (match_word_overlap)
+    6. Stop word filtering (match_stop_word_filtering)
+    7. Synonym matching (match_synonyms)
     """
     if not user_answer:
         return False, False, 0.0
 
+    # Default all accommodations to True if not specified
+    if settings is None:
+        settings = {}
+    use_acceptable = settings.get("match_acceptable_alternatives", True)
+    use_partial = settings.get("match_partial_substring", True)
+    use_word_overlap = settings.get("match_word_overlap", True)
+    use_stop_words = settings.get("match_stop_word_filtering", True)
+    use_synonyms = settings.get("match_synonyms", True)
+    use_first_name = settings.get("match_first_name_only", True)
+
     user_lower = user_answer.lower().strip()
     expected_lower = expected.lower().strip()
 
-    # Exact match
+    # Exact match (always enabled, case-insensitive)
     if user_lower == expected_lower:
         return True, False, 1.0
 
-    # Check acceptable alternatives
-    for alt in acceptable:
-        if alt and user_lower == alt.lower():
-            return True, False, 1.0
+    # Check acceptable alternatives (includes first name matching)
+    if use_acceptable:
+        for alt in acceptable:
+            if alt and user_lower == alt.lower():
+                return True, False, 1.0
+
+    # First name only matching (separate from acceptable list)
+    if use_first_name and " " in expected:
+        first_name = expected.split()[0].lower()
+        if user_lower == first_name:
+            return True, True, 0.9
 
     # Partial match - user answer contains expected or vice versa
-    if expected_lower in user_lower or user_lower in expected_lower:
-        return True, True, 0.8
+    if use_partial:
+        if expected_lower in user_lower or user_lower in expected_lower:
+            return True, True, 0.8
 
-    # Check if any word matches exactly
+    # Check word overlap
     user_words = set(user_lower.split())
     expected_words = set(expected_lower.split())
-    common = user_words & expected_words
 
-    if common:
-        score = len(common) / max(len(user_words), len(expected_words))
-        if score >= 0.5:
-            return True, True, score
+    if use_word_overlap:
+        common = user_words & expected_words
+        if common:
+            score = len(common) / max(len(user_words), len(expected_words))
+            if score >= 0.5:
+                return True, True, score
 
-    # Extract significant words (filter out stop words like "when", "we", "go", "to")
-    user_significant = extract_significant_words(user_lower)
-    expected_significant = extract_significant_words(expected_lower)
+    # Stop word filtering and significant word matching
+    if use_stop_words:
+        user_significant = extract_significant_words(user_lower)
+        expected_significant = extract_significant_words(expected_lower)
 
-    # Check significant word overlap (e.g., "Connecticut" matches in both)
-    if user_significant and expected_significant:
-        significant_common = user_significant & expected_significant
-        if significant_common:
-            score = len(significant_common) / max(len(user_significant), len(expected_significant))
-            # If any significant word matches, give credit
-            if score >= 0.3 or len(significant_common) >= 1:
-                return True, True, max(0.7, score)
+        # Check significant word overlap (e.g., "Connecticut" matches in both)
+        if user_significant and expected_significant:
+            significant_common = user_significant & expected_significant
+            if significant_common:
+                score = len(significant_common) / max(len(user_significant), len(expected_significant))
+                # If any significant word matches, give credit
+                if score >= 0.3 or len(significant_common) >= 1:
+                    return True, True, max(0.7, score)
 
-    # Synonym matching - check if words are semantically similar
-    is_similar, similarity_score = words_are_similar(user_words, expected_words)
-    if is_similar:
-        return True, True, similarity_score
+    # Synonym matching
+    if use_synonyms:
+        is_similar, similarity_score = words_are_similar(user_words, expected_words)
+        if is_similar:
+            return True, True, similarity_score
 
-    # Also check synonyms on significant words only
-    if user_significant and expected_significant:
-        is_similar_sig, similarity_score_sig = words_are_similar(user_significant, expected_significant)
-        if is_similar_sig:
-            return True, True, similarity_score_sig
+        # Also check synonyms on significant words only (if stop word filtering enabled)
+        if use_stop_words:
+            user_significant = extract_significant_words(user_lower)
+            expected_significant = extract_significant_words(expected_lower)
+            if user_significant and expected_significant:
+                is_similar_sig, similarity_score_sig = words_are_similar(user_significant, expected_significant)
+                if is_similar_sig:
+                    return True, True, similarity_score_sig
 
-    # Check individual synonym matches (e.g., user says "nice" for expected "friendly")
-    for uw in user_words:
-        for ew in expected_words:
-            if find_synonym_match(uw, ew):
-                return True, True, 0.7
+        # Check individual synonym matches (e.g., user says "nice" for expected "friendly")
+        for uw in user_words:
+            for ew in expected_words:
+                if find_synonym_match(uw, ew):
+                    return True, True, 0.7
 
     return False, False, 0.0
 

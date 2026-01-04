@@ -155,11 +155,31 @@ function findSynonymMatch(word1: string, word2: string): boolean {
   return false
 }
 
+// Accommodation settings interface
+interface AccommodationSettings {
+  match_acceptable_alternatives: boolean
+  match_partial_substring: boolean
+  match_word_overlap: boolean
+  match_stop_word_filtering: boolean
+  match_synonyms: boolean
+  match_first_name_only: boolean
+}
+
+const DEFAULT_ACCOMMODATIONS: AccommodationSettings = {
+  match_acceptable_alternatives: true,
+  match_partial_substring: true,
+  match_word_overlap: true,
+  match_stop_word_filtering: true,
+  match_synonyms: true,
+  match_first_name_only: true,
+}
+
 // Evaluate user answer against expected
 function evaluateAnswer(
   userAnswer: string,
   expected: string,
-  acceptable: string[]
+  acceptable: string[],
+  settings: AccommodationSettings = DEFAULT_ACCOMMODATIONS
 ): { isCorrect: boolean; isPartial: boolean; score: number } {
   if (!userAnswer) {
     return { isCorrect: false, isPartial: false, score: 0 }
@@ -168,66 +188,88 @@ function evaluateAnswer(
   const userLower = userAnswer.toLowerCase().trim()
   const expectedLower = expected.toLowerCase().trim()
 
-  // Exact match
+  // Exact match (always enabled, case-insensitive)
   if (userLower === expectedLower) {
     return { isCorrect: true, isPartial: false, score: 1.0 }
   }
 
   // Check acceptable alternatives
-  for (const alt of acceptable) {
-    if (alt && userLower === alt.toLowerCase()) {
-      return { isCorrect: true, isPartial: false, score: 1.0 }
+  if (settings.match_acceptable_alternatives) {
+    for (const alt of acceptable) {
+      if (alt && userLower === alt.toLowerCase()) {
+        return { isCorrect: true, isPartial: false, score: 1.0 }
+      }
+    }
+  }
+
+  // First name only matching
+  if (settings.match_first_name_only && expected.includes(' ')) {
+    const firstName = expected.split(' ')[0].toLowerCase()
+    if (userLower === firstName) {
+      return { isCorrect: true, isPartial: true, score: 0.9 }
     }
   }
 
   // Partial match - user answer contains expected or vice versa
-  if (expectedLower.includes(userLower) || userLower.includes(expectedLower)) {
-    return { isCorrect: true, isPartial: true, score: 0.8 }
+  if (settings.match_partial_substring) {
+    if (expectedLower.includes(userLower) || userLower.includes(expectedLower)) {
+      return { isCorrect: true, isPartial: true, score: 0.8 }
+    }
   }
 
-  // Check if any word matches exactly
+  // Check word overlap
   const userWords = new Set(userLower.split(/\s+/))
   const expectedWords = new Set(expectedLower.split(/\s+/))
-  const common = [...userWords].filter(w => expectedWords.has(w))
 
-  if (common.length > 0) {
-    const score = common.length / Math.max(userWords.size, expectedWords.size)
-    if (score >= 0.5) {
-      return { isCorrect: true, isPartial: true, score }
-    }
-  }
-
-  // Extract significant words (filter out stop words like "when", "we", "go", "to")
-  const userSignificant = extractSignificantWords(userLower)
-  const expectedSignificant = extractSignificantWords(expectedLower)
-
-  // Check significant word overlap (e.g., "Connecticut" matches in both)
-  if (userSignificant.size > 0 && expectedSignificant.size > 0) {
-    const significantCommon = [...userSignificant].filter(w => expectedSignificant.has(w))
-    if (significantCommon.length > 0) {
-      const score = significantCommon.length / Math.max(userSignificant.size, expectedSignificant.size)
-      // If any significant word matches, give credit
-      if (score >= 0.3 || significantCommon.length >= 1) {
-        return { isCorrect: true, isPartial: true, score: Math.max(0.7, score) }
+  if (settings.match_word_overlap) {
+    const common = [...userWords].filter(w => expectedWords.has(w))
+    if (common.length > 0) {
+      const score = common.length / Math.max(userWords.size, expectedWords.size)
+      if (score >= 0.5) {
+        return { isCorrect: true, isPartial: true, score }
       }
     }
   }
 
-  // Synonym matching - check if words are semantically similar
-  for (const uw of userWords) {
-    for (const ew of expectedWords) {
-      if (findSynonymMatch(uw, ew)) {
-        return { isCorrect: true, isPartial: true, score: 0.7 }
+  // Stop word filtering and significant word matching
+  if (settings.match_stop_word_filtering) {
+    const userSignificant = extractSignificantWords(userLower)
+    const expectedSignificant = extractSignificantWords(expectedLower)
+
+    // Check significant word overlap (e.g., "Connecticut" matches in both)
+    if (userSignificant.size > 0 && expectedSignificant.size > 0) {
+      const significantCommon = [...userSignificant].filter(w => expectedSignificant.has(w))
+      if (significantCommon.length > 0) {
+        const score = significantCommon.length / Math.max(userSignificant.size, expectedSignificant.size)
+        // If any significant word matches, give credit
+        if (score >= 0.3 || significantCommon.length >= 1) {
+          return { isCorrect: true, isPartial: true, score: Math.max(0.7, score) }
+        }
       }
     }
   }
 
-  // Also check synonyms on significant words only
-  if (userSignificant.size > 0 && expectedSignificant.size > 0) {
-    for (const uw of userSignificant) {
-      for (const ew of expectedSignificant) {
+  // Synonym matching
+  if (settings.match_synonyms) {
+    for (const uw of userWords) {
+      for (const ew of expectedWords) {
         if (findSynonymMatch(uw, ew)) {
           return { isCorrect: true, isPartial: true, score: 0.7 }
+        }
+      }
+    }
+
+    // Also check synonyms on significant words only (if stop word filtering enabled)
+    if (settings.match_stop_word_filtering) {
+      const userSignificant = extractSignificantWords(userLower)
+      const expectedSignificant = extractSignificantWords(expectedLower)
+      if (userSignificant.size > 0 && expectedSignificant.size > 0) {
+        for (const uw of userSignificant) {
+          for (const ew of expectedSignificant) {
+            if (findSynonymMatch(uw, ew)) {
+              return { isCorrect: true, isPartial: true, score: 0.7 }
+            }
+          }
         }
       }
     }
@@ -249,6 +291,7 @@ export default function LifeWordsQuestionSessionPage() {
   const [contacts, setContacts] = useState<PersonalContact[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [accommodations, setAccommodations] = useState<AccommodationSettings>(DEFAULT_ACCOMMODATIONS)
 
   // Phase state
   const [phase, setPhase] = useState<SessionPhase>('study')
@@ -295,6 +338,31 @@ export default function LifeWordsQuestionSessionPage() {
       if (!authSession?.access_token) {
         setError('Authentication required')
         return
+      }
+
+      // Load user's accommodation settings from profile
+      try {
+        const profileResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${authSession.access_token}`,
+            },
+          }
+        )
+        if (profileResponse.ok) {
+          const profile = await profileResponse.json()
+          setAccommodations({
+            match_acceptable_alternatives: profile.match_acceptable_alternatives ?? true,
+            match_partial_substring: profile.match_partial_substring ?? true,
+            match_word_overlap: profile.match_word_overlap ?? true,
+            match_stop_word_filtering: profile.match_stop_word_filtering ?? true,
+            match_synonyms: profile.match_synonyms ?? true,
+            match_first_name_only: profile.match_first_name_only ?? true,
+          })
+        }
+      } catch (e) {
+        console.warn('Could not load accommodation settings, using defaults')
       }
 
       const response = await fetch(
@@ -494,7 +562,8 @@ export default function LifeWordsQuestionSessionPage() {
       const evaluation = evaluateAnswer(
         transcript,
         currentQ.expected_answer,
-        currentQ.acceptable_answers
+        currentQ.acceptable_answers,
+        accommodations
       )
 
       // Save response
