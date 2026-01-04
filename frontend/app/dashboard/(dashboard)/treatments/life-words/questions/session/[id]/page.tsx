@@ -711,15 +711,6 @@ export default function LifeWordsQuestionSessionPage() {
     router.push('/dashboard/treatments/life-words')
   }
 
-  const handleSkip = () => {
-    const currentQ = currentQuestionRef.current
-    if (currentQ) {
-      saveResponse(currentQ, '', { isCorrect: false, isPartial: false, score: 0 }, 0)
-    }
-    setShowFeedback(false)
-    moveToNext()
-  }
-
   // ==================== RENDER ====================
 
   if (loading) {
@@ -1005,12 +996,6 @@ export default function LifeWordsQuestionSessionPage() {
                 resetTrigger={currentIndex}
                 autoStart={false}
               />
-              <button
-                onClick={handleSkip}
-                className="text-gray-500 hover:text-gray-700 underline text-lg"
-              >
-                Skip this question
-              </button>
             </div>
           ) : !showFeedback && (
             <div className="text-center">
