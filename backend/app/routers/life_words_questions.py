@@ -16,6 +16,29 @@ router = APIRouter()
 
 MIN_CONTACTS_REQUIRED = 2
 
+# Mapping of stored relationship values to acceptable spoken alternatives
+RELATIONSHIP_ALTERNATIVES = {
+    "child": ["child", "son", "daughter", "kid", "my child", "my son", "my daughter"],
+    "spouse": ["spouse", "husband", "wife", "partner", "my spouse", "my husband", "my wife"],
+    "grandchild": ["grandchild", "grandson", "granddaughter", "grandkid", "my grandchild", "my grandson", "my granddaughter"],
+    "parent": ["parent", "mother", "father", "mom", "dad", "my parent", "my mother", "my father", "my mom", "my dad"],
+    "sibling": ["sibling", "brother", "sister", "my sibling", "my brother", "my sister"],
+    "friend": ["friend", "my friend", "buddy", "pal"],
+    "pet": ["pet", "my pet", "dog", "cat", "animal"],
+    "caregiver": ["caregiver", "my caregiver", "helper", "aide", "nurse"],
+    "neighbor": ["neighbor", "my neighbor"],
+    "other": ["other"],
+}
+
+
+def get_relationship_alternatives(relationship: str) -> List[str]:
+    """Get acceptable alternative answers for a relationship value."""
+    rel_lower = relationship.lower()
+    if rel_lower in RELATIONSHIP_ALTERNATIVES:
+        return RELATIONSHIP_ALTERNATIVES[rel_lower]
+    # Default: return the relationship itself in different cases
+    return [relationship.lower(), relationship.title(), relationship]
+
 
 def generate_questions_for_contacts(contacts: List[Dict[str, Any]]) -> List[GeneratedQuestion]:
     """Generate 5 questions using data from the provided contacts."""
@@ -31,14 +54,16 @@ def generate_questions_for_contacts(contacts: List[Dict[str, Any]]) -> List[Gene
 
     # Question 1: Relationship recall (use first contact)
     c1 = shuffled[0]
+    relationship = c1["relationship"]
+    relationship_alternatives = get_relationship_alternatives(relationship)
     questions.append(GeneratedQuestion(
         contact_id=c1["id"],
         contact_name=c1["name"],
         contact_photo_url=c1["photo_url"],
         question_type=QuestionType.RELATIONSHIP,
         question_text=f"What is {c1['name']}'s relationship to you?",
-        expected_answer=c1["relationship"],
-        acceptable_answers=[c1["relationship"].lower(), c1["relationship"].title()]
+        expected_answer=relationship,
+        acceptable_answers=relationship_alternatives
     ))
 
     # Question 2: Association/Context recall (use second contact if has data)
