@@ -120,7 +120,15 @@ def generate_questions_for_contacts(contacts: List[Dict[str, Any]]) -> List[Gene
     if c5 and hint:
         relationship = c5["relationship"]
         # Format the hint to work grammatically (e.g., "loves gardening" or "is kind")
-        if not hint.startswith(("loves", "enjoys", "likes", "is")):
+        hint_lower = hint.lower().strip()
+        if hint_lower.startswith(("loves", "enjoys", "likes", "is ")):
+            # Already has a verb, use as-is but ensure lowercase start
+            hint = hint[0].lower() + hint[1:]
+        elif hint_lower.endswith("ing"):
+            # Gerund like "Making mobile apps" -> "loves making mobile apps"
+            hint = f"loves {hint[0].lower() + hint[1:]}"
+        else:
+            # Other cases like "gardening" or "baseball"
             hint = f"loves {hint}"
         questions.append(GeneratedQuestion(
             contact_id=c5["id"],
