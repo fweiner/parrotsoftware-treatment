@@ -288,35 +288,25 @@ export default function SettingsPage() {
 
           <div className="space-y-3 max-w-2xl">
             {ACCOMMODATION_INFO.map(({ key, label, description }) => (
-              <div
+              <label
                 key={key}
-                className={`flex items-start p-4 border-2 rounded-lg transition-colors ${
+                className={`flex items-start p-4 border-2 rounded-lg transition-colors cursor-pointer ${
                   accommodations[key]
                     ? 'border-green-300 bg-green-50'
                     : 'border-gray-200 bg-gray-50'
                 }`}
               >
-                <button
-                  type="button"
-                  onClick={() => handleAccommodationToggle(key)}
-                  className={`flex-shrink-0 w-12 h-7 rounded-full transition-colors relative ${
-                    accommodations[key] ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
-                  role="switch"
-                  aria-checked={accommodations[key]}
-                  aria-label={`Toggle ${label}`}
-                >
-                  <span
-                    className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                      accommodations[key] ? 'translate-x-5' : 'translate-x-0.5'
-                    }`}
-                  />
-                </button>
+                <input
+                  type="checkbox"
+                  checked={accommodations[key]}
+                  onChange={() => handleAccommodationToggle(key)}
+                  className="flex-shrink-0 w-6 h-6 mt-0.5 rounded border-2 border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 cursor-pointer"
+                />
                 <div className="ml-4 flex-1">
                   <div className="font-medium text-gray-900">{label}</div>
                   <div className="text-sm text-gray-600">{description}</div>
                 </div>
-              </div>
+              </label>
             ))}
           </div>
 
