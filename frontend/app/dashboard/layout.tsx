@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function DashboardLayout({
   children,
@@ -46,6 +47,13 @@ export default function DashboardLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <Link href="/dashboard" className="flex items-center space-x-3">
+              <Image
+                src="/header.jpg"
+                alt="Parrot Software Logo"
+                width={50}
+                height={50}
+                className="object-contain"
+              />
               <div className="text-3xl font-bold text-[var(--color-primary)]">
                 Parrot Software
               </div>

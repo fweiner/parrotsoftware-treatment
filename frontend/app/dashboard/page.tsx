@@ -6,34 +6,12 @@ import Link from 'next/link'
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
-  const [stats, setStats] = useState({
-    totalSessions: 0,
-    recentActivity: [] as any[]
-  })
   const supabase = createClient()
 
   useEffect(() => {
     const loadUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-
-      if (user) {
-        // Fetch user stats from backend
-        try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/results/my-progress`, {
-            headers: {
-              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-            }
-          })
-          if (response.ok) {
-            const progress = await response.json()
-            const total = progress.reduce((sum: number, p: any) => sum + p.total_sessions, 0)
-            setStats({ totalSessions: total, recentActivity: progress })
-          }
-        } catch (error) {
-          console.error('Failed to load stats:', error)
-        }
-      }
     }
 
     loadUserData()
@@ -49,33 +27,6 @@ export default function DashboardPage() {
         <p className="text-xl text-gray-700">
           Ready to continue your recovery journey?
         </p>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-[var(--color-primary)]">
-          <div className="text-5xl mb-2">📊</div>
-          <div className="text-3xl font-bold text-[var(--color-primary)]">
-            {stats.totalSessions}
-          </div>
-          <div className="text-lg text-gray-600">Total Sessions</div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-[var(--color-accent)]">
-          <div className="text-5xl mb-2">🎯</div>
-          <div className="text-3xl font-bold text-[var(--color-accent)]">
-            {stats.recentActivity.length}
-          </div>
-          <div className="text-lg text-gray-600">Activities Tried</div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-[var(--color-success)]">
-          <div className="text-5xl mb-2">⭐</div>
-          <div className="text-3xl font-bold text-[var(--color-success)]">
-            Keep Going!
-          </div>
-          <div className="text-lg text-gray-600">You're doing great</div>
-        </div>
       </div>
 
       {/* Available Treatments */}
