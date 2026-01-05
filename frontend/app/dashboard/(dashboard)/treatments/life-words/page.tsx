@@ -237,8 +237,8 @@ export default function LifeWordsPage() {
                 </p>
 
                 <p className="text-lg text-amber-700 mb-6">
-                  You currently have {status.contact_count} contact{status.contact_count !== 1 ? 's' : ''}.
-                  Add {(status.min_contacts_required || 2) - status.contact_count} more to begin!
+                  You currently have {status?.contact_count} contact{status?.contact_count !== 1 ? 's' : ''}.
+                  Add {(status?.min_contacts_required || 2) - (status?.contact_count || 0)} more to begin!
                 </p>
 
                 <div className="bg-white rounded-lg p-6 mb-6 text-left">
