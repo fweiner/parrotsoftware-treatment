@@ -717,7 +717,10 @@ export default function LifeWordsQuestionSessionPage() {
             isProcessingAnswerRef.current = false
           }, 4000)
         } else {
-          // Max cues reached - reveal answer and save
+          // Max cues reached - clear cue display and reveal answer
+          setShowCue(false)
+          setCurrentCue(null)
+
           await saveResponse(currentQ, transcript, evaluation, responseTime, cuesUsedForQuestion)
           await speak(`The answer was ${currentQ.expected_answer}`, { gender: voiceGender })
 
@@ -725,8 +728,6 @@ export default function LifeWordsQuestionSessionPage() {
           setTimeout(() => {
             setShowFeedback(false)
             setCueLevel(0)
-            setCurrentCue(null)
-            setShowCue(false)
             setCuesUsedForQuestion(0)
             moveToNext()
           }, 3000)
