@@ -278,6 +278,102 @@ function evaluateAnswer(
   return { isCorrect: false, isPartial: false, score: 0 }
 }
 
+// Generate contextual cues based on question type and contact info
+function generateCue(
+  question: GeneratedQuestion,
+  contact: PersonalContact | undefined,
+  cueLevel: number
+): string {
+  const questionType = question.question_type
+
+  // Question Type 1: Relationship - "What is X's relationship to you?"
+  if (questionType === 1) {
+    if (cueLevel === 1) {
+      // First cue: category hint
+      if (contact?.personality) {
+        return `Think about someone who is ${contact.personality}`
+      }
+      if (contact?.location_context) {
+        return `Think about who you see ${contact.location_context}`
+      }
+      return "Think about how this person is connected to your family"
+    }
+    if (cueLevel === 2) {
+      // Second cue: more specific
+      if (contact?.interests) {
+        return `This person enjoys ${contact.interests}`
+      }
+      if (contact?.association) {
+        return `Remember: ${contact.association}`
+      }
+      return "Look at the photo - how do you know this person?"
+    }
+  }
+
+  // Question Type 2: Association/Location - "Where do you usually see X?"
+  if (questionType === 2) {
+    if (cueLevel === 1) {
+      return `Think about where you spend time with your ${contact?.relationship || 'loved one'}`
+    }
+    if (cueLevel === 2) {
+      if (contact?.interests) {
+        return `This person enjoys ${contact.interests} - where might that happen?`
+      }
+      return `Picture yourself with ${question.contact_name} - where are you?`
+    }
+  }
+
+  // Question Type 3: Interests - "What does X enjoy doing?"
+  if (questionType === 3) {
+    if (cueLevel === 1) {
+      if (contact?.personality) {
+        return `This person is ${contact.personality} - what might they enjoy?`
+      }
+      return `Think about what makes ${question.contact_name} happy`
+    }
+    if (cueLevel === 2) {
+      if (contact?.location_context) {
+        return `When you see them ${contact.location_context}, what are they often doing?`
+      }
+      return `What do you do together with ${question.contact_name}?`
+    }
+  }
+
+  // Question Type 4: Personality - "How would you describe X's personality?"
+  if (questionType === 4) {
+    if (cueLevel === 1) {
+      if (contact?.interests) {
+        return `Someone who enjoys ${contact.interests} - how would you describe them?`
+      }
+      return `When you think of ${question.contact_name}, what kind of person comes to mind?`
+    }
+    if (cueLevel === 2) {
+      if (contact?.association) {
+        return `Remember: ${contact.association}. What does that tell you about them?`
+      }
+      return `Is ${question.contact_name} more outgoing or quiet? Calm or energetic?`
+    }
+  }
+
+  // Question Type 5: Name from description - "Who is your X who...?"
+  if (questionType === 5) {
+    if (cueLevel === 1) {
+      return `Look at the photo carefully - who do you see?`
+    }
+    if (cueLevel === 2) {
+      if (contact?.nickname) {
+        return `You might call this person "${contact.nickname}"`
+      }
+      // Give first letter hint for names
+      const firstLetter = question.expected_answer.charAt(0).toUpperCase()
+      return `Their name starts with "${firstLetter}"`
+    }
+  }
+
+  // Default fallback
+  return "Take another look and try again"
+}
+
 export default function LifeWordsQuestionSessionPage() {
   const router = useRouter()
   const params = useParams()
@@ -312,6 +408,13 @@ export default function LifeWordsQuestionSessionPage() {
   const [responses, setResponses] = useState<QuestionResponse[]>([])
   const [questionStartTime, setQuestionStartTime] = useState<number>(0)
   const [statistics, setStatistics] = useState<any>(null)
+
+  // Cueing state
+  const [cueLevel, setCueLevel] = useState(0) // 0 = no cue, 1 = first cue, 2 = second cue, 3 = reveal answer
+  const [currentCue, setCurrentCue] = useState<string | null>(null)
+  const [showCue, setShowCue] = useState(false)
+  const [cuesUsedForQuestion, setCuesUsedForQuestion] = useState(0)
+  const MAX_CUES = 2 // Number of cues before revealing answer
 
   // Refs for async callbacks
   const isProcessingAnswerRef = useRef(false)
@@ -566,9 +669,6 @@ export default function LifeWordsQuestionSessionPage() {
         accommodations
       )
 
-      // Save response
-      await saveResponse(currentQ, transcript, evaluation, responseTime)
-
       // Show feedback
       setLastResult({
         isCorrect: evaluation.isCorrect,
@@ -579,19 +679,59 @@ export default function LifeWordsQuestionSessionPage() {
       setShowFeedback(true)
       setIsAnswering(false)
 
-      // Speak feedback
       if (evaluation.isCorrect) {
+        // Correct answer - save and move on
+        await saveResponse(currentQ, transcript, evaluation, responseTime, cuesUsedForQuestion)
         const feedback = getRandomPositiveFeedback()
         await speak(feedback, { gender: voiceGender })
-      } else {
-        await speak(`The answer was ${currentQ.expected_answer}`, { gender: voiceGender })
-      }
 
-      // Move to next after delay
-      setTimeout(() => {
-        setShowFeedback(false)
-        moveToNext()
-      }, 3000)
+        // Move to next after delay
+        setTimeout(() => {
+          setShowFeedback(false)
+          setCueLevel(0)
+          setCurrentCue(null)
+          setShowCue(false)
+          setCuesUsedForQuestion(0)
+          moveToNext()
+        }, 3000)
+      } else {
+        // Wrong answer - check if we should offer a cue or reveal the answer
+        const nextCueLevel = cueLevel + 1
+
+        if (nextCueLevel <= MAX_CUES) {
+          // Offer a cue
+          const contact = contacts.find(c => c.id === currentQ.contact_id)
+          const cue = generateCue(currentQ, contact, nextCueLevel)
+          setCueLevel(nextCueLevel)
+          setCurrentCue(cue)
+          setShowCue(true)
+          setCuesUsedForQuestion(nextCueLevel)
+
+          await speak(`Not quite. Here's a hint: ${cue}`, { gender: voiceGender })
+
+          // Allow retry - keep feedback showing but re-enable answering after delay
+          setTimeout(() => {
+            setShowFeedback(false)
+            setIsAnswering(true)
+            setIsProcessingAnswer(false)
+            isProcessingAnswerRef.current = false
+          }, 4000)
+        } else {
+          // Max cues reached - reveal answer and save
+          await saveResponse(currentQ, transcript, evaluation, responseTime, cuesUsedForQuestion)
+          await speak(`The answer was ${currentQ.expected_answer}`, { gender: voiceGender })
+
+          // Move to next after delay
+          setTimeout(() => {
+            setShowFeedback(false)
+            setCueLevel(0)
+            setCurrentCue(null)
+            setShowCue(false)
+            setCuesUsedForQuestion(0)
+            moveToNext()
+          }, 3000)
+        }
+      }
     } catch (err) {
       console.error('Error handling answer:', err)
       setIsProcessingAnswer(false)
@@ -603,7 +743,8 @@ export default function LifeWordsQuestionSessionPage() {
     question: GeneratedQuestion,
     userAnswer: string,
     evaluation: { isCorrect: boolean; isPartial: boolean; score: number },
-    responseTime: number
+    responseTime: number,
+    cuesUsed: number = 0
   ) => {
     if (!session) return
 
@@ -630,6 +771,7 @@ export default function LifeWordsQuestionSessionPage() {
             response_time: responseTime,
             clarity_score: 0.8,
             correctness_score: evaluation.score,
+            cues_used: cuesUsed,
           }),
         }
       )
@@ -971,16 +1113,42 @@ export default function LifeWordsQuestionSessionPage() {
                     </p>
                     <p className="text-lg mt-2">You said: "{lastResult.userAnswer}"</p>
                   </div>
-                ) : (
+                ) : cueLevel <= MAX_CUES ? (
+                  // Show cue instead of answer
                   <div className="text-amber-800">
-                    <span className="text-4xl mb-2 block">~</span>
-                    <p className="text-xl font-bold">Not quite</p>
+                    <span className="text-4xl mb-2 block">💡</span>
+                    <p className="text-xl font-bold">Here's a hint</p>
                     <p className="text-lg mt-2">You said: "{lastResult.userAnswer}"</p>
-                    <p className="text-lg mt-1">
-                      Answer: <span className="font-bold">{lastResult.expectedAnswer}</span>
+                    {currentCue && (
+                      <p className="text-lg mt-3 italic bg-amber-100 p-3 rounded-lg">
+                        {currentCue}
+                      </p>
+                    )}
+                    <p className="text-base mt-4 text-gray-600">
+                      Try again! ({MAX_CUES - cueLevel + 1} {MAX_CUES - cueLevel + 1 === 1 ? 'hint' : 'hints'} remaining)
                     </p>
                   </div>
+                ) : (
+                  // Max cues reached - reveal answer
+                  <div className="text-amber-800">
+                    <span className="text-4xl mb-2 block">~</span>
+                    <p className="text-xl font-bold">The answer was:</p>
+                    <p className="text-2xl mt-2 font-bold text-[var(--color-primary)]">
+                      {lastResult.expectedAnswer}
+                    </p>
+                    <p className="text-base mt-3 text-gray-600">You said: "{lastResult.userAnswer}"</p>
+                  </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Show current cue when answering (after hint given) */}
+          {showCue && currentCue && isAnswering && !showFeedback && (
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mb-6 max-w-xl">
+              <div className="text-center">
+                <span className="text-2xl mr-2">💡</span>
+                <span className="text-lg text-blue-800 italic">{currentCue}</span>
               </div>
             </div>
           )}
