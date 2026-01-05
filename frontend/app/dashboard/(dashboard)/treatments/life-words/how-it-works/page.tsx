@@ -34,32 +34,59 @@ export default function HowItWorksPage() {
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-4 text-gray-900 flex items-center">
             <span className="text-3xl mr-3">1️⃣</span>
-            Getting Started
+            Getting Started - Adding Contacts
           </h2>
           <div className="bg-gray-50 rounded-lg p-6 ml-12">
             <p className="text-lg text-gray-700 mb-4">
-              First, add photos and information about people in your life:
+              Before you can practice, you need to add people to your contact list.
             </p>
-            <ul className="space-y-2 text-gray-700">
-              <li className="flex items-start">
-                <span className="text-green-600 mr-2 mt-1">•</span>
-                <span><strong>Photo:</strong> A clear picture of the person's face</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-600 mr-2 mt-1">•</span>
-                <span><strong>Name:</strong> Their full name and any nicknames you use</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-600 mr-2 mt-1">•</span>
-                <span><strong>Relationship:</strong> How they're connected to you (spouse, child, friend, etc.)</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-600 mr-2 mt-1">•</span>
-                <span><strong>Details:</strong> Their personality, interests, where you usually see them</span>
-              </li>
-            </ul>
-            <p className="text-gray-600 mt-4 italic">
-              You need at least 2 contacts to start practicing.
+
+            {/* Navigation Instructions */}
+            <div className="bg-white border-2 border-blue-300 rounded-lg p-4 mb-4">
+              <h4 className="font-bold text-blue-900 mb-3">How to get there:</h4>
+              <ol className="space-y-3 text-gray-700">
+                <li className="flex items-start">
+                  <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">1</span>
+                  <span>From the Life Words main page, find the icon grid at the bottom</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">2</span>
+                  <div>
+                    <span>Click the </span>
+                    <span className="inline-flex items-center bg-gray-100 border border-gray-300 rounded px-2 py-1 mx-1">
+                      <span className="text-lg mr-1">👥</span> Contacts
+                    </span>
+                    <span> button</span>
+                  </div>
+                </li>
+                <li className="flex items-start">
+                  <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">3</span>
+                  <div>
+                    <span>Click the </span>
+                    <span className="inline-flex items-center bg-[var(--color-primary)] text-white rounded px-3 py-1 mx-1 text-sm font-semibold">
+                      + Add New Contact
+                    </span>
+                    <span> button</span>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            {/* What you'll see */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+              <h4 className="font-bold text-amber-900 mb-2">What you'll see:</h4>
+              <p className="text-gray-700 mb-2">A form to fill out with:</p>
+              <ul className="space-y-1 text-gray-700 ml-4">
+                <li>• <strong>Photo upload area</strong> - Add a clear picture of the person</li>
+                <li>• <strong>Name field</strong> - Enter their full name</li>
+                <li>• <strong>Nickname field</strong> - What you usually call them</li>
+                <li>• <strong>Relationship dropdown</strong> - Select how they're connected to you</li>
+                <li>• <strong>Personal details</strong> - Their interests, personality, where you see them</li>
+              </ul>
+            </div>
+
+            <p className="text-gray-600 italic">
+              You need at least 2 contacts to start practicing. The more details you add, the better hints you'll get!
             </p>
           </div>
         </div>
@@ -72,26 +99,64 @@ export default function HowItWorksPage() {
           </h2>
           <div className="bg-green-50 rounded-lg p-6 ml-12">
             <p className="text-lg text-gray-700 mb-4">
-              In Name Practice, you'll see a photo and say the person's name out loud:
+              Practice recognizing people by looking at their photo and saying their name.
             </p>
-            <ol className="space-y-3 text-gray-700">
-              <li className="flex items-start">
-                <span className="text-[var(--color-primary)] font-bold mr-3">1.</span>
-                <span>A photo appears on screen</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-[var(--color-primary)] font-bold mr-3">2.</span>
-                <span>Click the microphone and say their name</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-[var(--color-primary)] font-bold mr-3">3.</span>
-                <span>The app checks if you said the right name</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-[var(--color-primary)] font-bold mr-3">4.</span>
-                <span>If you're stuck, request a hint based on their relationship or interests</span>
-              </li>
-            </ol>
+
+            {/* Navigation Instructions */}
+            <div className="bg-white border-2 border-green-300 rounded-lg p-4 mb-4">
+              <h4 className="font-bold text-green-900 mb-3">How to get there:</h4>
+              <ol className="space-y-3 text-gray-700">
+                <li className="flex items-start">
+                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">1</span>
+                  <span>Go to the Life Words main page</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">2</span>
+                  <div>
+                    <span>Click the big </span>
+                    <span className="inline-flex items-center bg-[var(--color-primary)] text-white rounded px-3 py-1 mx-1 text-sm font-semibold">
+                      Name Practice
+                    </span>
+                    <span> button</span>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            {/* What you'll see */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+              <h4 className="font-bold text-amber-900 mb-2">What you'll see:</h4>
+              <ul className="space-y-2 text-gray-700">
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  <span>A large photo of one of your contacts</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  <span>A microphone button to record your answer</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  <span>A "Get Hint" button if you need help</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  <span>A "Done for now" button when you want to stop</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* How it works */}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <h4 className="font-bold text-gray-900 mb-2">How to play:</h4>
+              <ol className="space-y-2 text-gray-700">
+                <li><span className="font-bold text-[var(--color-primary)]">1.</span> Look at the photo that appears</li>
+                <li><span className="font-bold text-[var(--color-primary)]">2.</span> Click the microphone button</li>
+                <li><span className="font-bold text-[var(--color-primary)]">3.</span> Say the person's name out loud</li>
+                <li><span className="font-bold text-[var(--color-primary)]">4.</span> The app will tell you if you're correct</li>
+                <li><span className="font-bold text-[var(--color-primary)]">5.</span> If wrong, you can get a hint or try again</li>
+              </ol>
+            </div>
           </div>
         </div>
 
@@ -103,31 +168,58 @@ export default function HowItWorksPage() {
           </h2>
           <div className="bg-purple-50 rounded-lg p-6 ml-12">
             <p className="text-lg text-gray-700 mb-4">
-              In Question Practice, you'll answer questions about your contacts:
+              Answer questions about the people in your life to strengthen your memory.
             </p>
-            <div className="space-y-3 text-gray-700 mb-4">
-              <p><strong>Types of questions:</strong></p>
-              <ul className="space-y-2 ml-4">
+
+            {/* Navigation Instructions */}
+            <div className="bg-white border-2 border-purple-300 rounded-lg p-4 mb-4">
+              <h4 className="font-bold text-purple-900 mb-3">How to get there:</h4>
+              <ol className="space-y-3 text-gray-700">
+                <li className="flex items-start">
+                  <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">1</span>
+                  <span>Go to the Life Words main page</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">2</span>
+                  <div>
+                    <span>Click the big </span>
+                    <span className="inline-flex items-center bg-purple-600 text-white rounded px-3 py-1 mx-1 text-sm font-semibold">
+                      Question Practice
+                    </span>
+                    <span> button</span>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            {/* What you'll see */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+              <h4 className="font-bold text-amber-900 mb-2">What you'll see:</h4>
+              <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start">
                   <span className="text-purple-600 mr-2">•</span>
-                  <span>"What is Barbara's relationship to you?"</span>
+                  <span>A question about one of your contacts (with or without their photo)</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-purple-600 mr-2">•</span>
-                  <span>"Where do you usually see Matthew?"</span>
+                  <span>A microphone button to record your answer</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-purple-600 mr-2">•</span>
-                  <span>"What does Sarah enjoy doing?"</span>
+                  <span>Progress indicator showing which question you're on</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-purple-600 mr-2">•</span>
-                  <span>"How would you describe John's personality?"</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-purple-600 mr-2">•</span>
-                  <span>"Who is your grandson who loves baseball?"</span>
-                </li>
+              </ul>
+            </div>
+
+            {/* Types of questions */}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <h4 className="font-bold text-gray-900 mb-2">Types of questions you'll be asked:</h4>
+              <ul className="space-y-2 text-gray-700 ml-4">
+                <li><span className="text-purple-600 font-bold">•</span> "What is [Name]'s relationship to you?"</li>
+                <li><span className="text-purple-600 font-bold">•</span> "Where do you usually see [Name]?"</li>
+                <li><span className="text-purple-600 font-bold">•</span> "What does [Name] enjoy doing?"</li>
+                <li><span className="text-purple-600 font-bold">•</span> "How would you describe [Name]'s personality?"</li>
+                <li><span className="text-purple-600 font-bold">•</span> "Who is your [relationship] who [hint]?"</li>
               </ul>
             </div>
           </div>
@@ -141,25 +233,38 @@ export default function HowItWorksPage() {
           </h2>
           <div className="bg-amber-50 rounded-lg p-6 ml-12">
             <p className="text-lg text-gray-700 mb-4">
-              If you answer incorrectly, the app provides helpful hints:
+              If you answer incorrectly, the app gives you hints to help you remember:
             </p>
-            <ul className="space-y-2 text-gray-700">
-              <li className="flex items-start">
-                <span className="text-amber-600 mr-2 mt-1">•</span>
-                <span><strong>First hint:</strong> A contextual clue based on the question type</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-amber-600 mr-2 mt-1">•</span>
-                <span><strong>Second hint:</strong> Another helpful detail from their profile</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-amber-600 mr-2 mt-1">•</span>
-                <span><strong>After 2 hints:</strong> The correct answer is revealed</span>
-              </li>
-            </ul>
-            <p className="text-gray-600 mt-4 italic">
-              Hints use information you've entered about each person, like their personality,
-              interests, or where you typically see them.
+
+            <div className="bg-white border border-amber-200 rounded-lg p-4 mb-4">
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <span className="bg-amber-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0 font-bold">1</span>
+                  <div>
+                    <p className="font-bold text-gray-900">First wrong answer → First hint</p>
+                    <p className="text-gray-600 text-sm">A contextual clue based on the question type</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="bg-amber-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0 font-bold">2</span>
+                  <div>
+                    <p className="font-bold text-gray-900">Second wrong answer → Second hint</p>
+                    <p className="text-gray-600 text-sm">Another helpful detail from their profile</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0 font-bold">✓</span>
+                  <div>
+                    <p className="font-bold text-gray-900">After 2 hints → Answer revealed</p>
+                    <p className="text-gray-600 text-sm">The correct answer is shown so you can learn it</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-gray-600 italic">
+              The hints use information you've entered about each person - their personality,
+              interests, or where you typically see them. More details = better hints!
             </p>
           </div>
         </div>
@@ -171,27 +276,49 @@ export default function HowItWorksPage() {
             Tracking Your Progress
           </h2>
           <div className="bg-gray-50 rounded-lg p-6 ml-12">
-            <p className="text-lg text-gray-700 mb-4">
-              The Progress page shows how you're doing over time:
-            </p>
-            <ul className="space-y-2 text-gray-700">
-              <li className="flex items-start">
-                <span className="text-green-600 mr-2 mt-1">•</span>
-                <span><strong>Accuracy:</strong> How often you answer correctly</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-600 mr-2 mt-1">•</span>
-                <span><strong>Response Time:</strong> How quickly you respond</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-600 mr-2 mt-1">•</span>
-                <span><strong>Speech Clarity:</strong> How clearly the app understands you</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-600 mr-2 mt-1">•</span>
-                <span><strong>Session History:</strong> Your recent practice sessions</span>
-              </li>
-            </ul>
+            {/* Navigation Instructions */}
+            <div className="bg-white border-2 border-green-300 rounded-lg p-4 mb-4">
+              <h4 className="font-bold text-green-900 mb-3">How to get there:</h4>
+              <ol className="space-y-3 text-gray-700">
+                <li className="flex items-start">
+                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">1</span>
+                  <span>From the Life Words main page, find the icon grid</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">2</span>
+                  <div>
+                    <span>Click the </span>
+                    <span className="inline-flex items-center bg-gray-100 border border-gray-300 rounded px-2 py-1 mx-1">
+                      <span className="text-lg mr-1">📊</span> Progress
+                    </span>
+                    <span> button</span>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            {/* What you'll see */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <h4 className="font-bold text-amber-900 mb-2">What you'll see:</h4>
+              <ul className="space-y-2 text-gray-700">
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  <span><strong>Accuracy:</strong> How often you answer correctly (shown as a percentage)</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  <span><strong>Response Time:</strong> How quickly you respond to questions</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  <span><strong>Speech Clarity:</strong> How clearly the app understands you</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  <span><strong>Session History:</strong> A list of your recent practice sessions</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -202,25 +329,52 @@ export default function HowItWorksPage() {
             Answer Matching Settings
           </h2>
           <div className="bg-gray-50 rounded-lg p-6 ml-12">
-            <p className="text-lg text-gray-700 mb-4">
-              In Settings, you can adjust how strictly answers are checked:
-            </p>
-            <ul className="space-y-2 text-gray-700">
-              <li className="flex items-start">
-                <span className="text-blue-600 mr-2 mt-1">•</span>
-                <span><strong>Synonym Matching:</strong> Accept similar words (e.g., "kind" for "nice")</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-blue-600 mr-2 mt-1">•</span>
-                <span><strong>Partial Matching:</strong> Accept partial answers</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-blue-600 mr-2 mt-1">•</span>
-                <span><strong>First Name Only:</strong> Accept just the first name for full names</span>
-              </li>
-            </ul>
-            <p className="text-gray-600 mt-4 italic">
-              Start with more accommodations enabled, then turn them off as recall improves.
+            {/* Navigation Instructions */}
+            <div className="bg-white border-2 border-blue-300 rounded-lg p-4 mb-4">
+              <h4 className="font-bold text-blue-900 mb-3">How to get there:</h4>
+              <ol className="space-y-3 text-gray-700">
+                <li className="flex items-start">
+                  <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">1</span>
+                  <div>
+                    <span>Click </span>
+                    <span className="inline-flex items-center bg-gray-100 border border-gray-300 rounded px-2 py-1 mx-1">
+                      <span className="text-lg mr-1">⚙️</span> Settings
+                    </span>
+                    <span> in the sidebar menu</span>
+                  </div>
+                </li>
+                <li className="flex items-start">
+                  <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0 text-sm font-bold">2</span>
+                  <span>Scroll down to the "Answer Matching" section</span>
+                </li>
+              </ol>
+            </div>
+
+            {/* What you'll see */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+              <h4 className="font-bold text-amber-900 mb-2">What you can adjust:</h4>
+              <ul className="space-y-2 text-gray-700">
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-2">☑️</span>
+                  <span><strong>Synonym Matching:</strong> Accept similar words (e.g., "kind" for "nice")</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-2">☑️</span>
+                  <span><strong>Partial Matching:</strong> Accept answers that partially match</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-2">☑️</span>
+                  <span><strong>Word Overlap:</strong> Accept answers with similar words</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-2">☑️</span>
+                  <span><strong>First Name Only:</strong> Accept just the first name for full names</span>
+                </li>
+              </ul>
+            </div>
+
+            <p className="text-gray-600 italic">
+              Start with all options checked (easier), then uncheck them as your recall improves for a greater challenge.
             </p>
           </div>
         </div>
@@ -254,6 +408,60 @@ export default function HowItWorksPage() {
             <div className="flex items-start">
               <span className="text-green-600 mr-2 text-xl">✓</span>
               <span>Click "Done for now" when you need a break</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Reference - Icon Grid */}
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900">
+            Quick Reference: Icon Grid
+          </h2>
+          <p className="text-gray-700 mb-4">
+            On the Life Words main page, you'll see these icons at the bottom:
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl">❓</span>
+                <span className="font-bold">Help</span>
+              </div>
+              <p className="text-sm text-gray-600">This guide you're reading now</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl">📊</span>
+                <span className="font-bold">Progress</span>
+              </div>
+              <p className="text-sm text-gray-600">See your practice statistics</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl">💬</span>
+                <span className="font-bold">Messages</span>
+              </div>
+              <p className="text-sm text-gray-600">Messages from family/caregivers</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl">👥</span>
+                <span className="font-bold">Contacts</span>
+              </div>
+              <p className="text-sm text-gray-600">Add or edit people</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl">ℹ️</span>
+                <span className="font-bold">My Info</span>
+              </div>
+              <p className="text-sm text-gray-600">Your personal information</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl">📦</span>
+                <span className="font-bold">My Stuff</span>
+              </div>
+              <p className="text-sm text-gray-600">Items and belongings</p>
             </div>
           </div>
         </div>
