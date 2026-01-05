@@ -334,60 +334,60 @@ export default function LifeWordsPage() {
             </div>
 
             {/* Secondary Actions - Icon Grid */}
-            <div className="mt-8 grid grid-cols-3 sm:grid-cols-6 gap-4">
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
               <Link
                 href="/dashboard/treatments/life-words/how-it-works"
                 title="Learn how to use this feature"
-                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
-                <span className="text-3xl mb-2">❓</span>
-                <span className="text-base font-semibold text-gray-700">Instructions</span>
+                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">❓</span>
+                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">Instructions</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/progress"
                 title="View your progress and statistics"
-                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-green-50 border-2 border-gray-200 hover:border-green-300 transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-green-50 border-2 border-gray-200 hover:border-green-300 transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
               >
-                <span className="text-3xl mb-2">📊</span>
-                <span className="text-base font-semibold text-gray-700">Progress</span>
+                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">📊</span>
+                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">Progress</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/messages"
                 title="View messages from family and caregivers"
-                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
-                <span className="text-3xl mb-2">💬</span>
-                <span className="text-base font-semibold text-gray-700">Messages</span>
+                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">💬</span>
+                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">Messages</span>
                 <UnreadBadge />
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/contacts"
                 title="Add or edit your contacts"
-                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
               >
-                <span className="text-3xl mb-2">👥</span>
-                <span className="text-base font-semibold text-gray-700">Contacts</span>
+                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">👥</span>
+                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">Contacts</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/my-information"
                 title="Update your personal information"
-                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
               >
-                <span className="text-3xl mb-2">ℹ️</span>
-                <span className="text-base font-semibold text-gray-700">My Info</span>
+                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">ℹ️</span>
+                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">My Info</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/items"
                 title="Manage your items and belongings"
-                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
               >
-                <span className="text-3xl mb-2">📦</span>
-                <span className="text-base font-semibold text-gray-700">My Stuff</span>
+                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">📦</span>
+                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">My Stuff</span>
               </Link>
             </div>
           </div>
