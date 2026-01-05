@@ -1114,23 +1114,21 @@ export default function LifeWordsQuestionSessionPage() {
                     </p>
                     <p className="text-lg mt-2">You said: "{lastResult.userAnswer}"</p>
                   </div>
-                ) : cueLevel <= MAX_CUES ? (
-                  // Show cue instead of answer
+                ) : showCue && currentCue ? (
+                  // Show cue instead of answer (showCue is true when hint is being offered)
                   <div className="text-amber-800">
                     <span className="text-4xl mb-2 block">💡</span>
                     <p className="text-xl font-bold">Here's a hint</p>
                     <p className="text-lg mt-2">You said: "{lastResult.userAnswer}"</p>
-                    {currentCue && (
-                      <p className="text-lg mt-3 italic bg-amber-100 p-3 rounded-lg">
-                        {currentCue}
-                      </p>
-                    )}
+                    <p className="text-lg mt-3 italic bg-amber-100 p-3 rounded-lg">
+                      {currentCue}
+                    </p>
                     <p className="text-base mt-4 text-gray-600">
                       Try again! ({MAX_CUES - cueLevel + 1} {MAX_CUES - cueLevel + 1 === 1 ? 'hint' : 'hints'} remaining)
                     </p>
                   </div>
                 ) : (
-                  // Max cues reached - reveal answer
+                  // Max cues reached or no cue - reveal answer
                   <div className="text-amber-800">
                     <span className="text-4xl mb-2 block">~</span>
                     <p className="text-xl font-bold">The answer was:</p>
