@@ -121,10 +121,11 @@ def generate_questions_for_contacts(contacts: List[Dict[str, Any]]) -> List[Gene
         relationship = c5["relationship"]
         # Format the hint to work grammatically (e.g., "loves gardening" or "is kind")
         hint_lower = hint.lower().strip()
+        first_word = hint_lower.split()[0] if hint_lower else ""
         if hint_lower.startswith(("loves", "enjoys", "likes", "is ")):
             # Already has a verb, use as-is but ensure lowercase start
             hint = hint[0].lower() + hint[1:]
-        elif hint_lower.endswith("ing"):
+        elif first_word.endswith("ing"):
             # Gerund like "Making mobile apps" -> "loves making mobile apps"
             hint = f"loves {hint[0].lower() + hint[1:]}"
         else:
