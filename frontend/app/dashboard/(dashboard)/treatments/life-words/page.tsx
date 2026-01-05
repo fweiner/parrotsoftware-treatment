@@ -165,80 +165,134 @@ export default function LifeWordsPage() {
         {needsSetup ? (
           // Setup flow - user needs to add contacts first
           <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-8 mb-6">
-            <div className="text-6xl mb-4">👤</div>
-            <h2 className="text-3xl font-bold mb-4 text-gray-900">
-              Let's Get Started!
-            </h2>
-            <p className="text-lg text-gray-700 mb-6">
-              Before you can practice, we need to add some photos of the people and things in your life.
-              You'll need at least {status?.min_contacts_required || 2} contacts to start a session.
-            </p>
+            {status?.contact_count === 0 ? (
+              // First-time user - show welcome guide
+              <>
+                <div className="text-6xl mb-4">👋</div>
+                <h2 className="text-3xl font-bold mb-4 text-gray-900">
+                  Welcome to Life Words and Memory!
+                </h2>
+                <p className="text-lg text-gray-700 mb-6">
+                  This tool helps you practice remembering the names of people, pets, and things
+                  that matter most to you. Let's get you set up!
+                </p>
 
-            {status && status.contact_count > 0 && (
-              <p className="text-lg text-amber-700 mb-6">
-                You currently have {status.contact_count} contact{status.contact_count !== 1 ? 's' : ''}.
-                Add {(status.min_contacts_required || 2) - status.contact_count} more to begin!
-              </p>
+                <div className="bg-white rounded-lg p-6 mb-6 text-left">
+                  <h3 className="text-2xl font-bold mb-4 text-gray-900">
+                    Quick Start Guide:
+                  </h3>
+                  <ol className="space-y-4 text-lg text-gray-700">
+                    <li className="flex items-start">
+                      <span className="bg-[var(--color-primary)] text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0 font-bold">1</span>
+                      <span><strong>Add contacts</strong> - Upload photos of family, friends, and pets along with their names and your relationship to them.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="bg-[var(--color-primary)] text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0 font-bold">2</span>
+                      <span><strong>Add details</strong> - Include their personality, interests, and where you usually see them. This helps create better hints!</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="bg-[var(--color-primary)] text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0 font-bold">3</span>
+                      <span><strong>Start practicing</strong> - Once you have at least 2 contacts, you can begin Name Practice or Question Practice.</span>
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-blue-800 text-lg">
+                    <strong>New here?</strong> Read the{' '}
+                    <Link href="/dashboard/treatments/life-words/how-it-works" className="underline hover:text-blue-600">
+                      How It Works guide
+                    </Link>{' '}
+                    to learn more about the different practice types and features.
+                  </p>
+                </div>
+
+                <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
+                  <Link
+                    href="/dashboard/treatments/life-words/setup"
+                    className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2 inline-block text-center"
+                    style={{ minHeight: '44px' }}
+                  >
+                    Add Your First Contact
+                  </Link>
+
+                  <Link
+                    href="/dashboard/treatments/life-words/how-it-works"
+                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 inline-block text-center"
+                    style={{ minHeight: '44px' }}
+                  >
+                    How It Works
+                  </Link>
+                </div>
+              </>
+            ) : (
+              // User has some contacts but not enough
+              <>
+                <div className="text-6xl mb-4">👤</div>
+                <h2 className="text-3xl font-bold mb-4 text-gray-900">
+                  Almost Ready!
+                </h2>
+                <p className="text-lg text-gray-700 mb-6">
+                  You're making progress! Add a few more contacts to start practicing.
+                </p>
+
+                <p className="text-lg text-amber-700 mb-6">
+                  You currently have {status.contact_count} contact{status.contact_count !== 1 ? 's' : ''}.
+                  Add {(status.min_contacts_required || 2) - status.contact_count} more to begin!
+                </p>
+
+                <div className="bg-white rounded-lg p-6 mb-6 text-left">
+                  <h3 className="text-2xl font-bold mb-4 text-gray-900">
+                    What you'll add:
+                  </h3>
+                  <ul className="space-y-3 text-lg text-gray-700">
+                    <li className="flex items-start">
+                      <span className="text-[var(--color-primary)] mr-3 text-2xl">1.</span>
+                      <span>A clear photo of the person or item</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[var(--color-primary)] mr-3 text-2xl">2.</span>
+                      <span>Their name and any nicknames you use</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[var(--color-primary)] mr-3 text-2xl">3.</span>
+                      <span>Your relationship (wife, grandson, friend, pet, etc.)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[var(--color-primary)] mr-3 text-2xl">4.</span>
+                      <span>Optional: A description or association to help you remember</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
+                  <Link
+                    href="/dashboard/treatments/life-words/setup"
+                    className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2 inline-block text-center"
+                    style={{ minHeight: '44px' }}
+                  >
+                    Add More Contacts
+                  </Link>
+
+                  <Link
+                    href="/dashboard/treatments/life-words/how-it-works"
+                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 inline-block text-center"
+                    style={{ minHeight: '44px' }}
+                  >
+                    How It Works
+                  </Link>
+
+                  <Link
+                    href="/dashboard/treatments/life-words/messages"
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-flex items-center justify-center gap-2"
+                    style={{ minHeight: '44px' }}
+                  >
+                    Messages
+                    <UnreadBadge />
+                  </Link>
+                </div>
+              </>
             )}
-
-            <div className="bg-white rounded-lg p-6 mb-6 text-left">
-              <h3 className="text-2xl font-bold mb-4 text-gray-900">
-                What you'll add:
-              </h3>
-              <ul className="space-y-3 text-lg text-gray-700">
-                <li className="flex items-start">
-                  <span className="text-[var(--color-primary)] mr-3 text-2xl">1.</span>
-                  <span>A clear photo of the person or item</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[var(--color-primary)] mr-3 text-2xl">2.</span>
-                  <span>Their name and any nicknames you use</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[var(--color-primary)] mr-3 text-2xl">3.</span>
-                  <span>Your relationship (wife, grandson, friend, pet, etc.)</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-[var(--color-primary)] mr-3 text-2xl">4.</span>
-                  <span>Optional: A description or association to help you remember</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
-              <Link
-                href="/dashboard/treatments/life-words/setup"
-                className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)] focus:ring-offset-2 inline-block text-center"
-                style={{ minHeight: '44px' }}
-              >
-                Get Started
-              </Link>
-
-              <Link
-                href="/dashboard/treatments/life-words/messages"
-                className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 inline-flex items-center justify-center gap-2"
-                style={{ minHeight: '44px' }}
-              >
-                Messages
-                <UnreadBadge />
-              </Link>
-
-              <Link
-                href="/dashboard/treatments/life-words/my-information"
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-block text-center"
-                style={{ minHeight: '44px' }}
-              >
-                My Information
-              </Link>
-
-              <Link
-                href="/dashboard/treatments/life-words/items"
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-6 px-8 rounded-lg text-xl transition-colors focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-offset-2 inline-block text-center"
-                style={{ minHeight: '44px' }}
-              >
-                My Stuff
-              </Link>
-            </div>
           </div>
         ) : (
           // Ready to practice - user has enough contacts
@@ -280,7 +334,16 @@ export default function LifeWordsPage() {
             </div>
 
             {/* Secondary Actions - Icon Grid */}
-            <div className="mt-8 grid grid-cols-3 sm:grid-cols-5 gap-4">
+            <div className="mt-8 grid grid-cols-3 sm:grid-cols-6 gap-4">
+              <Link
+                href="/dashboard/treatments/life-words/how-it-works"
+                title="Learn how to use this feature"
+                className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+              >
+                <span className="text-3xl mb-2">❓</span>
+                <span className="text-base font-semibold text-gray-700">Help</span>
+              </Link>
+
               <Link
                 href="/dashboard/treatments/life-words/progress"
                 title="View your progress and statistics"
