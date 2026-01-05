@@ -341,7 +341,7 @@ export default function LifeWordsPage() {
                 className="flex flex-col items-center p-4 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
                 <span className="text-3xl mb-2">❓</span>
-                <span className="text-base font-semibold text-gray-700">Help</span>
+                <span className="text-base font-semibold text-gray-700">Instructions</span>
               </Link>
 
               <Link
