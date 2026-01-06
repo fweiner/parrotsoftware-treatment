@@ -54,7 +54,7 @@ export default function HowItWorksPage() {
                   <div>
                     <span>Click the </span>
                     <span className="inline-flex items-center bg-gray-100 border border-gray-300 rounded px-2 py-1 mx-1">
-                      <span className="text-lg mr-1">👥</span> Contacts
+                      <span className="text-lg mr-1">👥</span> My People
                     </span>
                     <span> button</span>
                   </div>
@@ -64,7 +64,7 @@ export default function HowItWorksPage() {
                   <div>
                     <span>Click the </span>
                     <span className="inline-flex items-center bg-[var(--color-primary)] text-white rounded px-3 py-1 mx-1 text-sm font-semibold">
-                      + Add New Contact
+                      + Add a New Person
                     </span>
                     <span> button</span>
                   </div>
@@ -424,7 +424,7 @@ export default function HowItWorksPage() {
             <div className="bg-white rounded-lg p-3 border border-gray-200">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-2xl">❓</span>
-                <span className="font-bold">Help</span>
+                <span className="font-bold">Instructions</span>
               </div>
               <p className="text-sm text-gray-600">This guide you're reading now</p>
             </div>
@@ -445,9 +445,9 @@ export default function HowItWorksPage() {
             <div className="bg-white rounded-lg p-3 border border-gray-200">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-2xl">👥</span>
-                <span className="font-bold">Contacts</span>
+                <span className="font-bold">My People</span>
               </div>
-              <p className="text-sm text-gray-600">Add or edit people</p>
+              <p className="text-sm text-gray-600">Add or edit your people</p>
             </div>
             <div className="bg-white rounded-lg p-3 border border-gray-200">
               <div className="flex items-center gap-2 mb-1">
