@@ -115,7 +115,7 @@ export default function ContactsListPage() {
             href="/dashboard/treatments/life-words/contacts/new"
             className="flex-1 py-4 px-6 bg-blue-50 hover:bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 font-semibold text-lg transition-colors block text-center"
           >
-            + Add New Contact
+            + Add a New Person
           </Link>
           <button
             onClick={() => setIsInviteModalOpen(true)}

@@ -28,11 +28,16 @@ interface ContactFormProps {
 }
 
 const RELATIONSHIP_OPTIONS = [
-  { value: 'spouse', label: 'Spouse/Partner' },
-  { value: 'child', label: 'Son/Daughter' },
-  { value: 'grandchild', label: 'Grandchild' },
-  { value: 'parent', label: 'Parent' },
-  { value: 'sibling', label: 'Brother/Sister' },
+  { value: 'spouse', label: 'Spouse' },
+  { value: 'partner', label: 'Partner' },
+  { value: 'son', label: 'Son' },
+  { value: 'daughter', label: 'Daughter' },
+  { value: 'grandson', label: 'Grandson' },
+  { value: 'granddaughter', label: 'Granddaughter' },
+  { value: 'mother', label: 'Mother' },
+  { value: 'father', label: 'Father' },
+  { value: 'brother', label: 'Brother' },
+  { value: 'sister', label: 'Sister' },
   { value: 'friend', label: 'Friend' },
   { value: 'pet', label: 'Pet' },
   { value: 'caregiver', label: 'Caregiver' },

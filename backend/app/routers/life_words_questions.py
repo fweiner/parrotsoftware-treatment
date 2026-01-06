@@ -18,11 +18,22 @@ MIN_CONTACTS_REQUIRED = 2
 
 # Mapping of stored relationship values to acceptable spoken alternatives
 RELATIONSHIP_ALTERNATIVES = {
+    # Legacy combined values (for backward compatibility)
     "child": ["child", "son", "daughter", "kid", "my child", "my son", "my daughter"],
-    "spouse": ["spouse", "husband", "wife", "partner", "my spouse", "my husband", "my wife"],
     "grandchild": ["grandchild", "grandson", "granddaughter", "grandkid", "my grandchild", "my grandson", "my granddaughter"],
     "parent": ["parent", "mother", "father", "mom", "dad", "my parent", "my mother", "my father", "my mom", "my dad"],
     "sibling": ["sibling", "brother", "sister", "my sibling", "my brother", "my sister"],
+    # New specific values
+    "son": ["son", "my son", "child", "kid", "boy"],
+    "daughter": ["daughter", "my daughter", "child", "kid", "girl"],
+    "grandson": ["grandson", "my grandson", "grandchild", "grandkid"],
+    "granddaughter": ["granddaughter", "my granddaughter", "grandchild", "grandkid"],
+    "mother": ["mother", "mom", "mommy", "mama", "my mother", "my mom", "parent"],
+    "father": ["father", "dad", "daddy", "papa", "my father", "my dad", "parent"],
+    "brother": ["brother", "my brother", "sibling", "bro"],
+    "sister": ["sister", "my sister", "sibling", "sis"],
+    "spouse": ["spouse", "husband", "wife", "partner", "my spouse", "my husband", "my wife"],
+    "partner": ["partner", "my partner", "spouse", "significant other"],
     "friend": ["friend", "my friend", "buddy", "pal"],
     "pet": ["pet", "my pet", "dog", "cat", "animal"],
     "caregiver": ["caregiver", "my caregiver", "helper", "aide", "nurse"],
