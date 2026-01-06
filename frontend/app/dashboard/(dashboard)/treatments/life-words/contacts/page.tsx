@@ -89,10 +89,10 @@ export default function ContactsListPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Manage Your Contacts
+              Manage My People
             </h1>
             <p className="text-lg text-gray-600 mt-1">
-              {contacts.length} contact{contacts.length !== 1 ? 's' : ''} saved
+              {contacts.length} {contacts.length !== 1 ? 'people' : 'person'} saved
             </p>
           </div>
           <Link

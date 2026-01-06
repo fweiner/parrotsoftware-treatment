@@ -369,7 +369,7 @@ export default function LifeWordsPage() {
                 className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
               >
                 <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">👥</span>
-                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">Contacts</span>
+                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">My People</span>
               </Link>
 
               <Link
