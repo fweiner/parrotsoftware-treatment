@@ -334,60 +334,69 @@ export default function LifeWordsPage() {
             </div>
 
             {/* Secondary Actions - Icon Grid */}
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
               <Link
                 href="/dashboard/treatments/life-words/how-it-works"
                 title="Learn how to use this feature"
-                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="flex flex-col items-center justify-center p-3 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 min-h-[90px]"
               >
-                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">❓</span>
-                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">Instructions</span>
+                <span className="text-2xl mb-1">❓</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 text-center leading-tight">Instructions</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/progress"
                 title="View your progress and statistics"
-                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-green-50 border-2 border-gray-200 hover:border-green-300 transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="flex flex-col items-center justify-center p-3 rounded-lg bg-white hover:bg-green-50 border-2 border-gray-200 hover:border-green-300 transition-colors focus:outline-none focus:ring-2 focus:ring-green-300 min-h-[90px]"
               >
-                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">📊</span>
-                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">Progress</span>
+                <span className="text-2xl mb-1">📊</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 text-center leading-tight">Progress</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/messages"
                 title="View messages from family and caregivers"
-                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="flex flex-col items-center justify-center p-3 rounded-lg bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 min-h-[90px]"
               >
-                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">💬</span>
-                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">Messages</span>
+                <span className="text-2xl mb-1">💬</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 text-center leading-tight">Messages</span>
                 <UnreadBadge />
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/contacts"
                 title="Add or edit your contacts"
-                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                className="flex flex-col items-center justify-center p-3 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 min-h-[90px]"
               >
-                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">👥</span>
-                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">My People</span>
+                <span className="text-2xl mb-1">👥</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 text-center leading-tight">My People</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/my-information"
                 title="Update your personal information"
-                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                className="flex flex-col items-center justify-center p-3 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 min-h-[90px]"
               >
-                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">ℹ️</span>
-                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">My Info</span>
+                <span className="text-2xl mb-1">ℹ️</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 text-center leading-tight">My Info</span>
               </Link>
 
               <Link
                 href="/dashboard/treatments/life-words/items"
                 title="Manage your items and belongings"
-                className="flex flex-col items-center p-3 sm:p-4 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                className="flex flex-col items-center justify-center p-3 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 min-h-[90px]"
               >
-                <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">📦</span>
-                <span className="text-sm sm:text-base font-semibold text-gray-700 text-center">My Stuff</span>
+                <span className="text-2xl mb-1">📦</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 text-center leading-tight">My Stuff</span>
+              </Link>
+
+              <Link
+                href="/dashboard/settings"
+                title="Adjust voice and answer matching settings"
+                className="flex flex-col items-center justify-center p-3 rounded-lg bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 min-h-[90px]"
+              >
+                <span className="text-2xl mb-1">⚙️</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 text-center leading-tight">Settings</span>
               </Link>
             </div>
           </div>

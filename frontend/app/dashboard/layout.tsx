@@ -75,67 +75,11 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      {/* Main Content with Sidebar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar Navigation */}
-          <aside className="w-full md:w-64 flex-shrink-0">
-            <nav className="bg-white rounded-lg shadow-md p-6 sticky top-24" aria-label="Main navigation">
-              <h2 className="text-xl font-bold mb-6 text-gray-900">
-                Treatment Apps
-              </h2>
-
-              <ul className="space-y-3">
-                <li>
-                  <Link
-                    href="/dashboard"
-                    className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                  >
-                    🏠 Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/dashboard/treatments/word-finding"
-                    className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                  >
-                    📝 Word Finding
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/dashboard/treatments/life-words"
-                    className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                  >
-                    👤 Life Words and Memory
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/dashboard/treatments/short-term-memory"
-                    className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                    
-                  >
-                    🧠 Short Term Memory
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/dashboard/settings"
-                    className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--color-primary)] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                  >
-                    ⚙️ Settings
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-          </aside>
-
-          {/* Main Content Area */}
-          <main className="flex-1" id="main-content">
-            {children}
-          </main>
-        </div>
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main id="main-content">
+          {children}
+        </main>
       </div>
     </div>
   )

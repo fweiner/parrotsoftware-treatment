@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Image from 'next/image'
-import SpeechRecognitionButton from '@/components/word-finding/SpeechRecognitionButton'
+import SpeechRecognitionButton from '@/components/shared/SpeechRecognitionButton'
 import { PersonalizedCueSystem } from '@/components/life-words/PersonalizedCueSystem'
 import { speak, waitForVoices } from '@/lib/utils/textToSpeech'
 import { useVoicePreference } from '@/hooks/useVoicePreference'
@@ -77,6 +77,8 @@ export default function LifeWordsSessionPage() {
   const [hasSpokenFirstPrompt, setHasSpokenFirstPrompt] = useState(false)
   const [isWaitingForNext, setIsWaitingForNext] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [sessionPhase, setSessionPhase] = useState<'teaching' | 'testing'>('teaching')
+  const [teachingSpoken, setTeachingSpoken] = useState(false)
 
   const isProcessingAnswerRef = useRef(false)
   const currentContactRef = useRef<PersonalContact | null>(null)
@@ -87,6 +89,69 @@ export default function LifeWordsSessionPage() {
   useEffect(() => {
     initializeSession()
   }, [])
+
+  // Handle teaching phase - speak name and auto-advance
+  useEffect(() => {
+    if (sessionPhase !== 'teaching' || !currentContact || loading || teachingSpoken) return
+
+    const speakAndAdvance = async () => {
+      setTeachingSpoken(true)
+
+      try {
+        await waitForVoices()
+        // Say "This is [name]"
+        await speak(`This is ${currentContact.name}`, { gender: voiceGender })
+
+        // Wait a moment to let user see the photo
+        await new Promise(resolve => setTimeout(resolve, 2000))
+
+        // Move to next contact in teaching phase or switch to testing
+        const nextIndex = currentIndex + 1
+        if (nextIndex >= contacts.length) {
+          // Teaching complete, start testing phase
+          await speak(`Now let's practice! Look at each picture and say who it is.`, { gender: voiceGender })
+          await new Promise(resolve => setTimeout(resolve, 1500))
+
+          // Reset to first contact for testing
+          setCurrentIndex(0)
+          currentIndexRef.current = 0
+          setCurrentContact(contacts[0])
+          currentContactRef.current = contacts[0]
+          setSessionPhase('testing')
+          setIsAnswering(true)
+        } else {
+          // Move to next contact in teaching
+          setCurrentIndex(nextIndex)
+          currentIndexRef.current = nextIndex
+          setCurrentContact(contacts[nextIndex])
+          currentContactRef.current = contacts[nextIndex]
+          setTeachingSpoken(false)
+        }
+      } catch (error: any) {
+        console.warn('Teaching phase speech failed:', error?.message || error)
+        // Still advance even if speech fails
+        const nextIndex = currentIndex + 1
+        if (nextIndex >= contacts.length) {
+          setCurrentIndex(0)
+          currentIndexRef.current = 0
+          setCurrentContact(contacts[0])
+          currentContactRef.current = contacts[0]
+          setSessionPhase('testing')
+          setIsAnswering(true)
+        } else {
+          setCurrentIndex(nextIndex)
+          currentIndexRef.current = nextIndex
+          setCurrentContact(contacts[nextIndex])
+          currentContactRef.current = contacts[nextIndex]
+          setTeachingSpoken(false)
+        }
+      }
+    }
+
+    // Small delay before speaking to let image load
+    const timer = setTimeout(speakAndAdvance, 500)
+    return () => clearTimeout(timer)
+  }, [sessionPhase, currentContact, currentIndex, contacts, loading, teachingSpoken, voiceGender])
 
   const initializeSession = async () => {
     try {
@@ -123,7 +188,9 @@ export default function LifeWordsSessionPage() {
       currentIndexRef.current = 0
       setCurrentContact(firstContact)
       currentContactRef.current = firstContact
-      setIsAnswering(true)
+      setSessionPhase('teaching')
+      setTeachingSpoken(false)
+      setIsAnswering(false)
 
       hasSpokenFirstPromptRef.current = false
       setHasSpokenFirstPrompt(false)
@@ -275,7 +342,7 @@ export default function LifeWordsSessionPage() {
     setIsWaitingForNext(false)
 
     try {
-      await speak(`The person in this picture is...`, { gender: voiceGender })
+      await speak(`Who is this?`, { gender: voiceGender })
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }
@@ -355,13 +422,30 @@ export default function LifeWordsSessionPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
+      {/* Phase indicator */}
+      <div className="mb-4">
+        <span className={`inline-block px-4 py-2 rounded-full text-lg font-semibold ${
+          sessionPhase === 'teaching'
+            ? 'bg-blue-100 text-blue-700'
+            : 'bg-green-100 text-green-700'
+        }`}>
+          {sessionPhase === 'teaching' ? '📚 Learning' : '✏️ Practice'}
+        </span>
+      </div>
+
       {/* Progress indicator - simple dots */}
       <div className="flex gap-2 mb-8">
         {contacts.map((_, idx) => (
           <div
             key={idx}
             className={`w-3 h-3 rounded-full transition-colors ${
-              idx < currentIndex
+              sessionPhase === 'teaching'
+                ? idx < currentIndex
+                  ? 'bg-blue-500'
+                  : idx === currentIndex
+                  ? 'bg-blue-600'
+                  : 'bg-gray-300'
+                : idx < currentIndex
                 ? 'bg-green-500'
                 : idx === currentIndex
                 ? 'bg-[var(--color-primary)]'
@@ -374,19 +458,25 @@ export default function LifeWordsSessionPage() {
       {currentContact && (
         <>
           {/* Photo display */}
-          <div className={`relative w-80 h-80 md:w-96 md:h-96 rounded-lg overflow-hidden shadow-lg mb-8 transition-all duration-300 ${showSuccess ? 'ring-8 ring-green-500' : 'border-4 border-gray-200'}`}>
+          <div className={`relative w-80 h-80 md:w-96 md:h-96 rounded-lg overflow-hidden shadow-lg mb-8 transition-all duration-300 ${
+            showSuccess
+              ? 'ring-8 ring-green-500'
+              : sessionPhase === 'teaching'
+              ? 'border-4 border-blue-300'
+              : 'border-4 border-gray-200'
+          }`}>
             <Image
               src={currentContact.photo_url}
-              alt="Who is this?"
+              alt={sessionPhase === 'teaching' ? currentContact.name : "Who is this?"}
               fill
               className="object-cover"
               onLoad={() => {
-                if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
+                if (sessionPhase === 'testing' && currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
                   setTimeout(async () => {
                     if (!hasSpokenFirstPromptRef.current) {
                       try {
                         await waitForVoices()
-                        await speak(`The person in this picture is...`, { gender: voiceGender })
+                        await speak(`Who is this?`, { gender: voiceGender })
                         hasSpokenFirstPromptRef.current = true
                         setHasSpokenFirstPrompt(true)
                       } catch (error: any) {
@@ -404,46 +494,63 @@ export default function LifeWordsSessionPage() {
             )}
           </div>
 
-          {/* Prompt text */}
-          <p className="text-2xl text-gray-700 mb-6 text-center">
-            The person in this picture is...
-          </p>
-
-          {isWaitingForNext && !isAnswering ? (
+          {/* Teaching phase - show the name */}
+          {sessionPhase === 'teaching' ? (
             <div className="text-center">
-              <p className="text-xl text-green-700">Moving to next person...</p>
+              <p className="text-3xl font-bold text-blue-700 mb-4">
+                {currentContact.name}
+              </p>
+              <p className="text-xl text-gray-600 mb-2">
+                {currentContact.relationship}
+              </p>
+              <p className="text-lg text-gray-500 animate-pulse">
+                Learning names... {currentIndex + 1} of {contacts.length}
+              </p>
             </div>
-          ) : isAnswering ? (
-            <SpeechRecognitionButton
-              key={`speech-${currentIndex}`}
-              onResult={handleAnswer}
-              disabled={isProcessingAnswer}
-              resetTrigger={currentIndex}
-              autoStart={true}
-              onStartListening={async () => {
-                if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
-                  try {
-                    await waitForVoices()
-                    await speak(`The person in this picture is...`, { gender: voiceGender })
-                    hasSpokenFirstPromptRef.current = true
-                    setHasSpokenFirstPrompt(true)
-                  } catch (error: any) {
-                    console.warn('Failed to speak prompt:', error)
-                  }
-                }
-              }}
-            />
           ) : (
-            <PersonalizedCueSystem
-              contact={currentContact}
-              cuesUsed={cuesUsed}
-              onAnswer={handleCueAnswer}
-              onFinalAnswer={handleFinalAnswer}
-              onContinue={() => {
-                setIsAnswering(true)
-              }}
-              voiceGender={voiceGender}
-            />
+            <>
+              {/* Testing phase - prompt text */}
+              <p className="text-2xl text-gray-700 mb-6 text-center">
+                Who is this?
+              </p>
+
+              {isWaitingForNext && !isAnswering ? (
+                <div className="text-center">
+                  <p className="text-xl text-green-700">Moving to next person...</p>
+                </div>
+              ) : isAnswering ? (
+                <SpeechRecognitionButton
+                  key={`speech-${currentIndex}`}
+                  onResult={handleAnswer}
+                  disabled={isProcessingAnswer}
+                  resetTrigger={currentIndex}
+                  autoStart={true}
+                  onStartListening={async () => {
+                    if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
+                      try {
+                        await waitForVoices()
+                        await speak(`Who is this?`, { gender: voiceGender })
+                        hasSpokenFirstPromptRef.current = true
+                        setHasSpokenFirstPrompt(true)
+                      } catch (error: any) {
+                        console.warn('Failed to speak prompt:', error)
+                      }
+                    }
+                  }}
+                />
+              ) : (
+                <PersonalizedCueSystem
+                  contact={currentContact}
+                  cuesUsed={cuesUsed}
+                  onAnswer={handleCueAnswer}
+                  onFinalAnswer={handleFinalAnswer}
+                  onContinue={() => {
+                    setIsAnswering(true)
+                  }}
+                  voiceGender={voiceGender}
+                />
+              )}
+            </>
           )}
 
           {/* Done button - always visible */}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { speak, waitForVoices, type VoiceGender } from '@/lib/utils/textToSpeech'
-import SpeechRecognitionButton from '@/components/word-finding/SpeechRecognitionButton'
+import SpeechRecognitionButton from '@/components/shared/SpeechRecognitionButton'
 
 interface PersonalContact {
   id: string
