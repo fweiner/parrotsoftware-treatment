@@ -14,6 +14,7 @@ interface PersonalContact {
   id: string
   name: string
   nickname?: string
+  pronunciation?: string  // How to pronounce the name (e.g., "Wyner" for "Weiner")
   relationship: string
   photo_url: string
   first_letter?: string
@@ -81,6 +82,16 @@ export default function LifeWordsSessionPage() {
   const [teachingSpoken, setTeachingSpoken] = useState(false)
   const [attemptCount, setAttemptCount] = useState(0)
   const [showTryAgain, setShowTryAgain] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  // Session statistics for progress report
+  const [sessionStats, setSessionStats] = useState({
+    totalCorrect: 0,
+    totalIncorrect: 0,
+    totalCuesUsed: 0,
+    responseTimes: [] as number[],
+    confidenceScores: [] as number[],  // Speech clarity scores (0-1)
+  })
+  const trialStartTimeRef = useRef<number>(Date.now())
 
   const isProcessingAnswerRef = useRef(false)
   const currentContactRef = useRef<PersonalContact | null>(null)
@@ -109,7 +120,9 @@ export default function LifeWordsSessionPage() {
       try {
         await waitForVoices()
         // Say "This is [name]"
-        await speak(`This is ${currentContact.name}`, { gender: voiceGender })
+        // Use pronunciation if available, otherwise use name
+        const spokenName = currentContact.pronunciation || currentContact.name
+        await speak(`This is ${spokenName}`, { gender: voiceGender })
 
         // Wait a moment to let user see the photo and hear the name
         await new Promise(resolve => setTimeout(resolve, 2500))
@@ -129,8 +142,15 @@ export default function LifeWordsSessionPage() {
           currentContactRef.current = contacts[0]
           setAttemptCount(0)
           setShowTryAgain(false)
+          setIsTransitioning(true)
           setSessionPhase('testing')
-          setIsAnswering(true)
+          // Reset trial timer when entering testing phase
+          trialStartTimeRef.current = Date.now()
+          // Delay before enabling speech recognition to avoid picking up TTS
+          setTimeout(() => {
+            setIsTransitioning(false)
+            setIsAnswering(true)
+          }, 1500)
         } else {
           // Move to next contact in teaching
           isTeachingSpeakingRef.current = false
@@ -152,8 +172,15 @@ export default function LifeWordsSessionPage() {
           currentContactRef.current = contacts[0]
           setAttemptCount(0)
           setShowTryAgain(false)
+          setIsTransitioning(true)
           setSessionPhase('testing')
-          setIsAnswering(true)
+          // Reset trial timer when entering testing phase
+          trialStartTimeRef.current = Date.now()
+          // Delay before enabling speech recognition
+          setTimeout(() => {
+            setIsTransitioning(false)
+            setIsAnswering(true)
+          }, 1500)
         } else {
           setCurrentIndex(nextIndex)
           currentIndexRef.current = nextIndex
@@ -221,7 +248,7 @@ export default function LifeWordsSessionPage() {
     }
   }
 
-  const handleAnswer = async (transcript: string) => {
+  const handleAnswer = async (transcript: string, confidence?: number) => {
     const currentCont = currentContactRef.current
     const isProcessing = isProcessingAnswerRef.current
 
@@ -236,7 +263,7 @@ export default function LifeWordsSessionPage() {
       const isCorrect = matchPersonalAnswer(transcript, currentCont)
 
       if (isCorrect) {
-        await handleCorrectAnswer(transcript)
+        await handleCorrectAnswer(transcript, confidence)
       } else {
         // Answer is incorrect
         const newAttemptCount = attemptCount + 1
@@ -262,7 +289,7 @@ export default function LifeWordsSessionPage() {
     }
   }
 
-  const handleCorrectAnswer = async (userAnswer: string) => {
+  const handleCorrectAnswer = async (userAnswer: string, confidence?: number) => {
     const currentCont = currentContactRef.current
     if (!currentCont || !session) {
       setIsProcessingAnswer(false)
@@ -270,11 +297,25 @@ export default function LifeWordsSessionPage() {
       return
     }
 
+    // Calculate response time
+    const responseTime = (Date.now() - trialStartTimeRef.current) / 1000
+
     setIsAnswering(false)
     setIsWaitingForNext(true)
     setShowSuccess(true)
 
-    await saveResponse(true, userAnswer)
+    // Update session stats (include confidence if available)
+    setSessionStats(prev => ({
+      ...prev,
+      totalCorrect: prev.totalCorrect + 1,
+      totalCuesUsed: prev.totalCuesUsed + cuesUsed,
+      responseTimes: [...prev.responseTimes, responseTime],
+      confidenceScores: confidence !== undefined
+        ? [...prev.confidenceScores, confidence]
+        : prev.confidenceScores,
+    }))
+
+    await saveResponse(true, userAnswer, undefined, responseTime, confidence)
 
     try {
       const feedbackMessage = getRandomPositiveFeedback()
@@ -289,11 +330,26 @@ export default function LifeWordsSessionPage() {
     }, 2000)
   }
 
-  const handleCueAnswer = async (userAnswer: string, isCorrect: boolean) => {
+  const handleCueAnswer = async (userAnswer: string, isCorrect: boolean, confidence?: number) => {
     if (!currentContact || !session) return
 
     if (isCorrect) {
-      await saveResponse(true, userAnswer, cuesUsed + 1)
+      // Calculate response time
+      const responseTime = (Date.now() - trialStartTimeRef.current) / 1000
+      const totalCues = cuesUsed + 1
+
+      // Update session stats (include confidence if available)
+      setSessionStats(prev => ({
+        ...prev,
+        totalCorrect: prev.totalCorrect + 1,
+        totalCuesUsed: prev.totalCuesUsed + totalCues,
+        responseTimes: [...prev.responseTimes, responseTime],
+        confidenceScores: confidence !== undefined
+          ? [...prev.confidenceScores, confidence]
+          : prev.confidenceScores,
+      }))
+
+      await saveResponse(true, userAnswer, totalCues, responseTime, confidence)
       try {
         const feedbackMessage = getRandomPositiveFeedback()
         await speak(feedbackMessage, { gender: voiceGender })
@@ -313,11 +369,28 @@ export default function LifeWordsSessionPage() {
   const handleFinalAnswer = async () => {
     if (!currentContact || !session) return
 
-    await saveResponse(false, null, 7)
+    // Calculate response time for incorrect answer
+    const responseTime = (Date.now() - trialStartTimeRef.current) / 1000
+
+    // Update session stats for incorrect answer
+    setSessionStats(prev => ({
+      ...prev,
+      totalIncorrect: prev.totalIncorrect + 1,
+      totalCuesUsed: prev.totalCuesUsed + 7,
+      responseTimes: [...prev.responseTimes, responseTime],
+    }))
+
+    await saveResponse(false, null, 7, responseTime)
     moveToNext()
   }
 
-  const saveResponse = async (isCorrect: boolean, userAnswer: string | null, cuesUsedOverride?: number) => {
+  const saveResponse = async (
+    isCorrect: boolean,
+    userAnswer: string | null,
+    cuesUsedOverride?: number,
+    responseTime?: number,
+    confidence?: number
+  ) => {
     const currentCont = currentContactRef.current
     if (!currentCont || !session) return
 
@@ -337,9 +410,10 @@ export default function LifeWordsSessionPage() {
           contact_id: currentCont.id,
           is_correct: isCorrect,
           cues_used: actualCuesUsed,
-          response_time: 0,
+          response_time: responseTime ?? null,
           user_answer: userAnswer,
           correct_answer: currentCont.name,
+          speech_confidence: confidence ?? null,
         })
       })
     } catch (error) {
@@ -362,6 +436,9 @@ export default function LifeWordsSessionPage() {
     currentContactRef.current = nextContact
     isProcessingAnswerRef.current = false
 
+    // Reset trial timer for next contact
+    trialStartTimeRef.current = Date.now()
+
     setCurrentIndex(nextIndex)
     setCurrentContact(nextContact)
     setCuesUsed(0)
@@ -371,8 +448,10 @@ export default function LifeWordsSessionPage() {
     setIsProcessingAnswer(false)
     setIsWaitingForNext(false)
 
+    // Use appropriate prompt based on whether it's a person or item
+    const prompt = nextContact.relationship === 'item' ? 'What is this?' : 'Who is this?'
     try {
-      await speak(`Who is this?`, { gender: voiceGender })
+      await speak(prompt, { gender: voiceGender })
     } catch (speakError: any) {
       console.warn('Text-to-speech failed:', speakError?.message || speakError)
     }
@@ -432,16 +511,62 @@ export default function LifeWordsSessionPage() {
   }
 
   if (isCompleted) {
+    const totalAttempts = sessionStats.totalCorrect + sessionStats.totalIncorrect
+    const accuracy = totalAttempts > 0 ? Math.round((sessionStats.totalCorrect / totalAttempts) * 100) : 0
+    const avgResponseTime = sessionStats.responseTimes.length > 0
+      ? (sessionStats.responseTimes.reduce((a, b) => a + b, 0) / sessionStats.responseTimes.length).toFixed(1)
+      : '0'
+    const avgCues = totalAttempts > 0 ? (sessionStats.totalCuesUsed / totalAttempts).toFixed(1) : '0'
+    // Calculate speech clarity (confidence scores are 0-1, convert to percentage)
+    const avgSpeechClarity = sessionStats.confidenceScores.length > 0
+      ? Math.round((sessionStats.confidenceScores.reduce((a, b) => a + b, 0) / sessionStats.confidenceScores.length) * 100)
+      : null
+
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center max-w-md w-full">
           <h2 className="text-4xl font-bold text-green-600 mb-4">Great job!</h2>
-          <p className="text-xl text-gray-700 mb-8">
-            You practiced with all your contacts today.
+          <p className="text-xl text-gray-700 mb-6">
+            You completed today's practice session.
           </p>
+
+          {/* Progress Report */}
+          <div className="bg-white border-2 border-gray-200 rounded-lg p-6 mb-6 text-left">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">Session Progress</h3>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-lg text-gray-600">Accuracy:</span>
+                <span className="text-2xl font-bold text-green-600">{accuracy}%</span>
+              </div>
+
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-lg text-gray-600">Correct:</span>
+                <span className="text-2xl font-bold text-gray-800">{sessionStats.totalCorrect} / {totalAttempts}</span>
+              </div>
+
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-lg text-gray-600">Avg Response Time:</span>
+                <span className="text-2xl font-bold text-blue-600">{avgResponseTime}s</span>
+              </div>
+
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-lg text-gray-600">Avg Hints Used:</span>
+                <span className="text-2xl font-bold text-orange-600">{avgCues}</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-lg text-gray-600">Speech Clarity:</span>
+                <span className="text-2xl font-bold text-purple-600">
+                  {avgSpeechClarity !== null ? `${avgSpeechClarity}%` : 'N/A'}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <button
             onClick={handleDone}
-            className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-4 px-8 rounded-lg text-xl"
+            className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-4 px-8 rounded-lg text-xl w-full"
           >
             Done
           </button>
@@ -487,8 +612,8 @@ export default function LifeWordsSessionPage() {
 
       {currentContact && (
         <>
-          {/* Photo display */}
-          <div className={`relative w-80 h-80 md:w-96 md:h-96 rounded-lg overflow-hidden shadow-lg mb-8 transition-all duration-300 ${
+          {/* Photo display - 50% smaller */}
+          <div className={`relative w-40 h-40 md:w-48 md:h-48 rounded-lg overflow-hidden shadow-lg mb-6 transition-all duration-300 ${
             showSuccess
               ? 'ring-8 ring-green-500'
               : sessionPhase === 'teaching'
@@ -506,7 +631,8 @@ export default function LifeWordsSessionPage() {
                     if (!hasSpokenFirstPromptRef.current) {
                       try {
                         await waitForVoices()
-                        await speak(`Who is this?`, { gender: voiceGender })
+                        const prompt = currentContact.relationship === 'item' ? 'What is this?' : 'Who is this?'
+                        await speak(prompt, { gender: voiceGender })
                         hasSpokenFirstPromptRef.current = true
                         setHasSpokenFirstPrompt(true)
                       } catch (error: any) {
@@ -541,12 +667,12 @@ export default function LifeWordsSessionPage() {
             <>
               {/* Testing phase - prompt text */}
               <p className="text-2xl text-gray-700 mb-6 text-center">
-                Who is this?
+                {currentContact.relationship === 'item' ? 'What is this?' : 'Who is this?'}
               </p>
 
               {isWaitingForNext && !isAnswering ? (
                 <div className="text-center">
-                  <p className="text-xl text-green-700">Moving to next person...</p>
+                  <p className="text-xl text-green-700">Moving to next...</p>
                 </div>
               ) : showTryAgain ? (
                 <div className="text-center space-y-4">
@@ -574,6 +700,10 @@ export default function LifeWordsSessionPage() {
                     </button>
                   </div>
                 </div>
+              ) : isTransitioning ? (
+                <div className="text-center">
+                  <p className="text-2xl text-green-600 font-semibold animate-pulse">Get ready to practice!</p>
+                </div>
               ) : isAnswering ? (
                 <SpeechRecognitionButton
                   key={`speech-${currentIndex}-${attemptCount}`}
@@ -585,7 +715,8 @@ export default function LifeWordsSessionPage() {
                     if (currentIndex === 0 && attemptCount === 0 && !hasSpokenFirstPromptRef.current) {
                       try {
                         await waitForVoices()
-                        await speak(`Who is this?`, { gender: voiceGender })
+                        const prompt = currentContact.relationship === 'item' ? 'What is this?' : 'Who is this?'
+                        await speak(prompt, { gender: voiceGender })
                         hasSpokenFirstPromptRef.current = true
                         setHasSpokenFirstPrompt(true)
                       } catch (error: any) {

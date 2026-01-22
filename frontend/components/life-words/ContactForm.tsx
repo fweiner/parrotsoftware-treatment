@@ -6,6 +6,7 @@ import { PhotoUpload } from './PhotoUpload'
 export interface ContactFormData {
   name: string
   nickname: string
+  pronunciation: string  // How to pronounce the name (e.g., "Wyner" for "Weiner")
   relationship: string
   photo_url: string
   category: string
@@ -74,6 +75,7 @@ export function ContactForm({
   const [formData, setFormData] = useState<ContactFormData>({
     name: initialData?.name || '',
     nickname: initialData?.nickname || '',
+    pronunciation: initialData?.pronunciation || '',
     relationship: initialData?.relationship || '',
     photo_url: initialData?.photo_url || '',
     category: initialData?.category || 'family',
@@ -164,6 +166,23 @@ export function ContactForm({
           className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
         />
         <p className="text-sm text-gray-500 mt-1">What do you usually call them?</p>
+      </div>
+
+      {/* Pronunciation */}
+      <div>
+        <label htmlFor="pronunciation" className="block text-lg font-semibold text-gray-700 mb-2">
+          Pronunciation (optional)
+        </label>
+        <input
+          type="text"
+          id="pronunciation"
+          name="pronunciation"
+          value={formData.pronunciation}
+          onChange={handleChange}
+          placeholder="e.g., Wyner (if spelled Weiner)"
+          className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+        />
+        <p className="text-sm text-gray-500 mt-1">How do you say their name? Leave blank if it's pronounced as spelled.</p>
       </div>
 
       {/* Relationship */}

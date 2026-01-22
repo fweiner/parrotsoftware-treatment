@@ -68,6 +68,7 @@ async def create_personal_contact(
                 "user_id": user_id,
                 "name": contact_data.name,
                 "nickname": empty_to_none(contact_data.nickname),
+                "pronunciation": empty_to_none(contact_data.pronunciation),
                 "relationship": contact_data.relationship,
                 "photo_url": contact_data.photo_url,
                 "category": empty_to_none(contact_data.category),
@@ -233,7 +234,7 @@ async def create_life_words_session(
     user_id: CurrentUserId,
     db: Database
 ) -> Dict[str, Any]:
-    """Create a new life words session."""
+    """Create a new life words session including contacts and items."""
     try:
         # Get contacts to use
         if session_data.contact_ids:
@@ -252,13 +253,45 @@ async def create_life_words_session(
                 filters={"user_id": user_id, "is_active": True}
             )
 
-        if not contacts or len(contacts) < MIN_CONTACTS_REQUIRED:
+        # Also get all active items from "My Stuff"
+        items = await db.query(
+            "personal_items",
+            select="*",
+            filters={"user_id": user_id, "is_active": True}
+        )
+
+        # Convert items to contact-like format for unified handling
+        items_as_contacts = []
+        for item in (items or []):
+            items_as_contacts.append({
+                "id": item["id"],
+                "name": item["name"],
+                "nickname": None,
+                "relationship": "item",  # Mark as item type
+                "photo_url": item["photo_url"],
+                "first_letter": item["name"][0].upper() if item["name"] else None,
+                "category": item.get("category"),
+                "description": item.get("purpose"),  # Use purpose as description
+                "association": item.get("associated_with"),
+                "location_context": item.get("location"),
+                # Item-specific fields for hints
+                "item_features": item.get("features"),
+                "item_size": item.get("size"),
+                "item_shape": item.get("shape"),
+                "item_color": item.get("color"),
+                "item_weight": item.get("weight"),
+            })
+
+        # Combine contacts and items
+        all_entries = (contacts or []) + items_as_contacts
+
+        if not all_entries or len(all_entries) < MIN_CONTACTS_REQUIRED:
             raise HTTPException(
                 status_code=400,
-                detail=f"At least {MIN_CONTACTS_REQUIRED} contacts required to start a session"
+                detail=f"At least {MIN_CONTACTS_REQUIRED} contacts or items required to start a session"
             )
 
-        contact_ids = [c["id"] for c in contacts]
+        contact_ids = [c["id"] for c in all_entries]
 
         # Create session
         session = await db.insert(
@@ -272,7 +305,7 @@ async def create_life_words_session(
 
         return {
             "session": session[0],
-            "contacts": contacts
+            "contacts": all_entries
         }
 
     except HTTPException:
@@ -288,7 +321,7 @@ async def get_life_words_session(
     user_id: CurrentUserId,
     db: Database
 ) -> Dict[str, Any]:
-    """Get session details with contacts and responses."""
+    """Get session details with contacts, items, and responses."""
     try:
         # Get session
         sessions = await db.query(
@@ -301,6 +334,7 @@ async def get_life_words_session(
             raise HTTPException(status_code=404, detail="Session not found")
 
         session = sessions[0]
+        session_ids = session["contact_ids"]
 
         # Get contacts for this session
         contacts = await db.query(
@@ -308,7 +342,39 @@ async def get_life_words_session(
             select="*",
             filters={"user_id": user_id}
         )
-        session_contacts = [c for c in contacts if c["id"] in session["contact_ids"]]
+        session_contacts = [c for c in (contacts or []) if c["id"] in session_ids]
+
+        # Get items for this session
+        items = await db.query(
+            "personal_items",
+            select="*",
+            filters={"user_id": user_id}
+        )
+
+        # Convert items to contact-like format
+        items_as_contacts = []
+        for item in (items or []):
+            if item["id"] in session_ids:
+                items_as_contacts.append({
+                    "id": item["id"],
+                    "name": item["name"],
+                    "nickname": None,
+                    "relationship": "item",
+                    "photo_url": item["photo_url"],
+                    "first_letter": item["name"][0].upper() if item["name"] else None,
+                    "category": item.get("category"),
+                    "description": item.get("purpose"),
+                    "association": item.get("associated_with"),
+                    "location_context": item.get("location"),
+                    "item_features": item.get("features"),
+                    "item_size": item.get("size"),
+                    "item_shape": item.get("shape"),
+                    "item_color": item.get("color"),
+                    "item_weight": item.get("weight"),
+                })
+
+        # Combine contacts and items
+        all_entries = session_contacts + items_as_contacts
 
         # Get responses
         responses = await db.query(
@@ -320,7 +386,7 @@ async def get_life_words_session(
 
         return {
             "session": session,
-            "contacts": session_contacts,
+            "contacts": all_entries,
             "responses": responses or []
         }
 

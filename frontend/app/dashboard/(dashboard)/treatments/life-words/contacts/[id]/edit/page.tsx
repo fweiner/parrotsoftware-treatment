@@ -12,6 +12,7 @@ interface ContactData {
   id: string
   name: string
   nickname?: string
+  pronunciation?: string
   relationship: string
   photo_url: string
   category?: string
@@ -171,6 +172,7 @@ export default function EditContactPage() {
             initialData={{
               name: contact.name,
               nickname: contact.nickname || '',
+              pronunciation: contact.pronunciation || '',
               relationship: contact.relationship,
               photo_url: contact.photo_url,
               category: contact.category || 'family',
