@@ -189,6 +189,10 @@ def generate_information_items(profile: Dict[str, Any]) -> List[InformationItem]
             tts_value = format_phone_for_tts(value)
         elif field_name == "address_zip":
             tts_value = format_zip_for_tts(value)
+        elif field_name == "full_name":
+            # Use pronunciation if available, otherwise use the actual name
+            pronunciation = profile.get("full_name_pronunciation")
+            tts_value = pronunciation if pronunciation and str(pronunciation).strip() else display_value
         else:
             tts_value = display_value
 

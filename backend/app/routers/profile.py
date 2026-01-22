@@ -53,6 +53,8 @@ async def update_profile(
     update_data = {}
     if profile_data.full_name is not None:
         update_data["full_name"] = profile_data.full_name
+    if profile_data.full_name_pronunciation is not None:
+        update_data["full_name_pronunciation"] = profile_data.full_name_pronunciation
     if profile_data.date_of_birth is not None:
         update_data["date_of_birth"] = profile_data.date_of_birth.isoformat()
     # Personal information fields

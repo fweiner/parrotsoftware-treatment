@@ -37,6 +37,7 @@ class TokenResponse(BaseModel):
 class ProfileUpdate(BaseModel):
     """Profile update request."""
     full_name: Optional[str] = None
+    full_name_pronunciation: Optional[str] = None
     date_of_birth: Optional[date] = None
     # Personal information fields
     gender: Optional[str] = None
@@ -69,6 +70,7 @@ class ProfileResponse(BaseModel):
     id: str
     email: str
     full_name: Optional[str] = None
+    full_name_pronunciation: Optional[str] = None
     date_of_birth: Optional[date] = None
     # Personal information fields
     gender: Optional[str] = None

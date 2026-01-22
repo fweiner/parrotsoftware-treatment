@@ -10,6 +10,7 @@ interface ProfileData {
   id: string
   email: string
   full_name: string | null
+  full_name_pronunciation: string | null
   date_of_birth: string | null
   gender: string | null
   height: string | null
@@ -67,6 +68,7 @@ export default function MyInformationPage() {
 
   // Form state
   const [fullName, setFullName] = useState('')
+  const [fullNamePronunciation, setFullNamePronunciation] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [gender, setGender] = useState('')
   const [height, setHeight] = useState('')
@@ -111,6 +113,7 @@ export default function MyInformationPage() {
 
       // Populate form
       setFullName(data.full_name || '')
+      setFullNamePronunciation(data.full_name_pronunciation || '')
       setDateOfBirth(data.date_of_birth || '')
       setGender(data.gender || '')
       setHeight(data.height || '')
@@ -148,6 +151,7 @@ export default function MyInformationPage() {
 
       const updateData = {
         full_name: fullName || null,
+        full_name_pronunciation: fullNamePronunciation || null,
         date_of_birth: dateOfBirth || null,
         gender: gender || null,
         height: height || null,
@@ -252,6 +256,23 @@ export default function MyInformationPage() {
                   className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                   placeholder="Your full name"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="fullNamePronunciation" className="block text-lg font-medium mb-2">
+                  Name Pronunciation <span className="text-gray-500 font-normal">(optional)</span>
+                </label>
+                <input
+                  id="fullNamePronunciation"
+                  type="text"
+                  value={fullNamePronunciation}
+                  onChange={(e) => setFullNamePronunciation(e.target.value)}
+                  className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                  placeholder="e.g., 'Wyner' for 'Weiner'"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  If your name is often mispronounced, enter how it should be spoken
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
