@@ -79,11 +79,14 @@ export default function LifeWordsSessionPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [sessionPhase, setSessionPhase] = useState<'teaching' | 'testing'>('teaching')
   const [teachingSpoken, setTeachingSpoken] = useState(false)
+  const [attemptCount, setAttemptCount] = useState(0)
+  const [showTryAgain, setShowTryAgain] = useState(false)
 
   const isProcessingAnswerRef = useRef(false)
   const currentContactRef = useRef<PersonalContact | null>(null)
   const currentIndexRef = useRef(0)
   const hasSpokenFirstPromptRef = useRef(false)
+  const isTeachingSpeakingRef = useRef(false)
 
   // Initialize session
   useEffect(() => {
@@ -94,7 +97,13 @@ export default function LifeWordsSessionPage() {
   useEffect(() => {
     if (sessionPhase !== 'teaching' || !currentContact || loading || teachingSpoken) return
 
+    // Prevent concurrent speech
+    if (isTeachingSpeakingRef.current) return
+
     const speakAndAdvance = async () => {
+      // Double-check we're not already speaking
+      if (isTeachingSpeakingRef.current) return
+      isTeachingSpeakingRef.current = true
       setTeachingSpoken(true)
 
       try {
@@ -102,25 +111,29 @@ export default function LifeWordsSessionPage() {
         // Say "This is [name]"
         await speak(`This is ${currentContact.name}`, { gender: voiceGender })
 
-        // Wait a moment to let user see the photo
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // Wait a moment to let user see the photo and hear the name
+        await new Promise(resolve => setTimeout(resolve, 2500))
 
         // Move to next contact in teaching phase or switch to testing
         const nextIndex = currentIndex + 1
         if (nextIndex >= contacts.length) {
           // Teaching complete, start testing phase
           await speak(`Now let's practice! Look at each picture and say who it is.`, { gender: voiceGender })
-          await new Promise(resolve => setTimeout(resolve, 1500))
+          await new Promise(resolve => setTimeout(resolve, 2000))
 
           // Reset to first contact for testing
+          isTeachingSpeakingRef.current = false
           setCurrentIndex(0)
           currentIndexRef.current = 0
           setCurrentContact(contacts[0])
           currentContactRef.current = contacts[0]
+          setAttemptCount(0)
+          setShowTryAgain(false)
           setSessionPhase('testing')
           setIsAnswering(true)
         } else {
           // Move to next contact in teaching
+          isTeachingSpeakingRef.current = false
           setCurrentIndex(nextIndex)
           currentIndexRef.current = nextIndex
           setCurrentContact(contacts[nextIndex])
@@ -129,6 +142,7 @@ export default function LifeWordsSessionPage() {
         }
       } catch (error: any) {
         console.warn('Teaching phase speech failed:', error?.message || error)
+        isTeachingSpeakingRef.current = false
         // Still advance even if speech fails
         const nextIndex = currentIndex + 1
         if (nextIndex >= contacts.length) {
@@ -136,6 +150,8 @@ export default function LifeWordsSessionPage() {
           currentIndexRef.current = 0
           setCurrentContact(contacts[0])
           currentContactRef.current = contacts[0]
+          setAttemptCount(0)
+          setShowTryAgain(false)
           setSessionPhase('testing')
           setIsAnswering(true)
         } else {
@@ -148,8 +164,8 @@ export default function LifeWordsSessionPage() {
       }
     }
 
-    // Small delay before speaking to let image load
-    const timer = setTimeout(speakAndAdvance, 500)
+    // Delay before speaking to let image load
+    const timer = setTimeout(speakAndAdvance, 800)
     return () => clearTimeout(timer)
   }, [sessionPhase, currentContact, currentIndex, contacts, loading, teachingSpoken, voiceGender])
 
@@ -191,6 +207,7 @@ export default function LifeWordsSessionPage() {
       setSessionPhase('teaching')
       setTeachingSpoken(false)
       setIsAnswering(false)
+      isTeachingSpeakingRef.current = false
 
       hasSpokenFirstPromptRef.current = false
       setHasSpokenFirstPrompt(false)
@@ -221,11 +238,22 @@ export default function LifeWordsSessionPage() {
       if (isCorrect) {
         await handleCorrectAnswer(transcript)
       } else {
-        // Answer is incorrect - offer a hint
+        // Answer is incorrect
+        const newAttemptCount = attemptCount + 1
+        setAttemptCount(newAttemptCount)
         setIsProcessingAnswer(false)
         isProcessingAnswerRef.current = false
-        setCuesUsed(0)
-        setIsAnswering(false)
+
+        // After 2 attempts, show hints. Otherwise offer "Try Again"
+        if (newAttemptCount >= 2) {
+          setCuesUsed(0)
+          setIsAnswering(false)
+          setShowTryAgain(false)
+        } else {
+          // Show "Try Again" option
+          setShowTryAgain(true)
+          setIsAnswering(false)
+        }
       }
     } catch (err) {
       console.error('Error handling answer:', err)
@@ -337,6 +365,8 @@ export default function LifeWordsSessionPage() {
     setCurrentIndex(nextIndex)
     setCurrentContact(nextContact)
     setCuesUsed(0)
+    setAttemptCount(0)
+    setShowTryAgain(false)
     setIsAnswering(true)
     setIsProcessingAnswer(false)
     setIsWaitingForNext(false)
@@ -518,15 +548,41 @@ export default function LifeWordsSessionPage() {
                 <div className="text-center">
                   <p className="text-xl text-green-700">Moving to next person...</p>
                 </div>
+              ) : showTryAgain ? (
+                <div className="text-center space-y-4">
+                  <p className="text-xl text-gray-600">That's not quite right. Want to try again?</p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                      onClick={() => {
+                        setShowTryAgain(false)
+                        setIsAnswering(true)
+                      }}
+                      className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-4 px-8 rounded-lg text-xl"
+                    >
+                      Try Again
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowTryAgain(false)
+                        setAttemptCount(2)
+                        setCuesUsed(0)
+                        setIsAnswering(false)
+                      }}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 px-8 rounded-lg text-xl"
+                    >
+                      Get a Hint
+                    </button>
+                  </div>
+                </div>
               ) : isAnswering ? (
                 <SpeechRecognitionButton
-                  key={`speech-${currentIndex}`}
+                  key={`speech-${currentIndex}-${attemptCount}`}
                   onResult={handleAnswer}
                   disabled={isProcessingAnswer}
                   resetTrigger={currentIndex}
                   autoStart={true}
                   onStartListening={async () => {
-                    if (currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
+                    if (currentIndex === 0 && attemptCount === 0 && !hasSpokenFirstPromptRef.current) {
                       try {
                         await waitForVoices()
                         await speak(`Who is this?`, { gender: voiceGender })
