@@ -14,12 +14,19 @@ interface LifeWordsStatus {
   min_contacts_required: number
 }
 
+interface InformationStatus {
+  can_start_session: boolean
+  filled_fields_count: number
+  min_fields_required: number
+}
+
 export default function LifeWordsPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [isStarting, setIsStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<LifeWordsStatus | null>(null)
+  const [infoStatus, setInfoStatus] = useState<InformationStatus | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -47,6 +54,21 @@ export default function LifeWordsPage() {
 
       const data = await response.json()
       setStatus(data)
+
+      // Also load information practice status
+      try {
+        const infoResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/life-words/information-status`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          }
+        })
+        if (infoResponse.ok) {
+          const infoData = await infoResponse.json()
+          setInfoStatus(infoData)
+        }
+      } catch (infoErr) {
+        console.warn('Could not load information status:', infoErr)
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred')
       console.error('Error loading status:', err)
@@ -134,6 +156,48 @@ export default function LifeWordsPage() {
     } catch (err: any) {
       setError(err.message || 'An error occurred')
       console.error('Error creating question session:', err)
+    } finally {
+      setIsStarting(false)
+    }
+  }
+
+  const handleStartInformationSession = async () => {
+    setIsStarting(true)
+    setError(null)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        setError('Please log in to start a session')
+        return
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/life-words/information-sessions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      })
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to create information session'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.detail || errorMessage
+        } catch (e) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        }
+        throw new Error(errorMessage)
+      }
+
+      const sessionData = await response.json()
+      router.push(`/dashboard/treatments/life-words/information/session/${sessionData.session.id}`)
+
+    } catch (err: any) {
+      setError(err.message || 'An error occurred')
+      console.error('Error creating information session:', err)
     } finally {
       setIsStarting(false)
     }
@@ -313,7 +377,7 @@ export default function LifeWordsPage() {
             )}
 
             {/* Primary Practice Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
               <button
                 onClick={handleStartSession}
                 disabled={isStarting}
@@ -331,7 +395,30 @@ export default function LifeWordsPage() {
               >
                 {isStarting ? 'Starting...' : 'Question Practice'}
               </button>
+
+              <button
+                onClick={handleStartInformationSession}
+                disabled={isStarting || !infoStatus?.can_start_session}
+                title={!infoStatus?.can_start_session ? `Fill in at least ${infoStatus?.min_fields_required || 5} fields in "My Info" to practice` : 'Practice recalling your personal information'}
+                className="bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-6 px-12 rounded-lg text-2xl transition-colors focus:outline-none focus:ring-4 focus:ring-teal-300 focus:ring-offset-2"
+                style={{ minHeight: '44px' }}
+              >
+                {isStarting ? 'Starting...' : 'Information Practice'}
+              </button>
             </div>
+
+            {/* Information Practice Helper Text */}
+            {!infoStatus?.can_start_session && infoStatus && (
+              <div className="mt-4 text-center">
+                <p className="text-gray-600 text-base">
+                  <span className="text-teal-600 font-semibold">Information Practice:</span> Fill in at least {infoStatus.min_fields_required} fields in{' '}
+                  <Link href="/dashboard/treatments/life-words/my-information" className="text-teal-600 underline hover:text-teal-700">
+                    My Info
+                  </Link>{' '}
+                  to enable. ({infoStatus.filled_fields_count}/{infoStatus.min_fields_required} filled)
+                </p>
+              </div>
+            )}
 
             {/* Secondary Actions - Icon Grid */}
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">

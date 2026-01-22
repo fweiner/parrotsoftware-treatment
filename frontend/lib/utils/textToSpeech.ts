@@ -74,6 +74,7 @@ export function getVoiceByGender(
 
 /**
  * Speaks text using text-to-speech
+ * Includes workaround for Chrome bug where onend doesn't fire
  */
 export function speak(
   text: string,
@@ -105,16 +106,63 @@ export function speak(
       }
     }
 
-    utterance.onend = () => resolve()
+    let resolved = false
+    let speechStarted = false
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+    let fallbackTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const cleanup = () => {
+      resolved = true
+      if (pollInterval) clearInterval(pollInterval)
+      if (fallbackTimeout) clearTimeout(fallbackTimeout)
+    }
+
+    utterance.onstart = () => {
+      speechStarted = true
+    }
+
+    utterance.onend = () => {
+      if (!resolved) {
+        cleanup()
+        resolve()
+      }
+    }
+
     utterance.onerror = (error) => {
-      // Extract error message from SpeechSynthesisErrorEvent
-      const errorMessage = error.error
-        ? `Speech synthesis error: ${error.error}`
-        : 'Speech synthesis failed'
-      reject(new Error(errorMessage))
+      if (!resolved) {
+        cleanup()
+        // Extract error message from SpeechSynthesisErrorEvent
+        const errorMessage = error.error
+          ? `Speech synthesis error: ${error.error}`
+          : 'Speech synthesis failed'
+        reject(new Error(errorMessage))
+      }
     }
 
     synth.speak(utterance)
+
+    // Chrome bug workaround: poll speaking state, but only after speech has started
+    // Wait 500ms before polling to ensure speech has time to begin
+    setTimeout(() => {
+      if (resolved) return
+      pollInterval = setInterval(() => {
+        // Only check for completion if speech has started
+        if (!resolved && speechStarted && synth && !synth.speaking && !synth.pending) {
+          cleanup()
+          resolve()
+        }
+      }, 100)
+    }, 500)
+
+    // Fallback timeout: estimate ~200ms per word + 3s buffer (more conservative)
+    const wordCount = text.split(/\s+/).length
+    const estimatedDuration = Math.max(wordCount * 200 + 3000, 5000)
+    fallbackTimeout = setTimeout(() => {
+      if (!resolved) {
+        cleanup()
+        resolve() // Resolve anyway after timeout
+      }
+    }, estimatedDuration)
   })
 }
 
