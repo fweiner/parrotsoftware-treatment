@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
 interface ItemData {
   id: string
   name: string
+  pronunciation?: string
   photo_url: string
   purpose?: string
   features?: string
@@ -168,6 +169,7 @@ export default function EditItemPage() {
           <ItemForm
             initialData={{
               name: item.name,
+              pronunciation: item.pronunciation || '',
               photo_url: item.photo_url,
               purpose: item.purpose || '',
               features: item.features || '',

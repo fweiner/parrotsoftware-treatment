@@ -29,6 +29,7 @@ async def create_personal_item(
             {
                 "user_id": user_id,
                 "name": item_data.name,
+                "pronunciation": empty_to_none(item_data.pronunciation),
                 "photo_url": item_data.photo_url,
                 "purpose": empty_to_none(item_data.purpose),
                 "features": empty_to_none(item_data.features),

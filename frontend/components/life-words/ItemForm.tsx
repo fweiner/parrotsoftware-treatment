@@ -5,6 +5,7 @@ import { PhotoUpload } from './PhotoUpload'
 
 export interface ItemFormData {
   name: string
+  pronunciation: string  // How to pronounce the name
   photo_url: string
   purpose: string
   features: string
@@ -47,6 +48,7 @@ export function ItemForm({
 }: ItemFormProps) {
   const [formData, setFormData] = useState<ItemFormData>({
     name: initialData?.name || '',
+    pronunciation: initialData?.pronunciation || '',
     photo_url: initialData?.photo_url || '',
     purpose: initialData?.purpose || '',
     features: initialData?.features || '',
@@ -80,6 +82,24 @@ export function ItemForm({
     }
     if (!formData.photo_url) {
       setError('Please upload a photo')
+      return
+    }
+
+    // Count how many description fields are filled
+    const descriptionFields = [
+      formData.purpose,
+      formData.features,
+      formData.category,
+      formData.size,
+      formData.shape,
+      formData.color,
+      formData.weight,
+      formData.location,
+      formData.associated_with,
+    ]
+    const filledDescriptions = descriptionFields.filter(field => field && field.trim()).length
+    if (filledDescriptions < 6) {
+      setError(`Please fill in at least 6 description fields. You've filled ${filledDescriptions} so far. These descriptions are used as hints during practice.`)
       return
     }
 
@@ -117,10 +137,34 @@ export function ItemForm({
         />
       </div>
 
+      {/* Pronunciation */}
+      <div>
+        <label htmlFor="pronunciation" className="block text-lg font-semibold text-gray-700 mb-2">
+          Pronunciation (optional)
+        </label>
+        <input
+          type="text"
+          id="pronunciation"
+          name="pronunciation"
+          value={formData.pronunciation}
+          onChange={handleChange}
+          placeholder="e.g., Wy-ner (if spelled Weiner)"
+          className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+        />
+        <p className="text-sm text-gray-500 mt-1">How do you say this item's name? Leave blank if it's pronounced as spelled.</p>
+      </div>
+
+      {/* Description Fields Notice */}
+      <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+        <p className="text-blue-800 font-semibold">
+          Please fill in at least 6 of the description fields below. These are used as hints during practice.
+        </p>
+      </div>
+
       {/* Category */}
       <div>
         <label htmlFor="category" className="block text-lg font-semibold text-gray-700 mb-2">
-          Category (optional)
+          Category
         </label>
         <select
           id="category"
@@ -139,7 +183,7 @@ export function ItemForm({
       {/* Purpose */}
       <div>
         <label htmlFor="purpose" className="block text-lg font-semibold text-gray-700 mb-2">
-          Purpose (optional)
+          Purpose
         </label>
         <textarea
           id="purpose"
@@ -156,7 +200,7 @@ export function ItemForm({
       {/* Features */}
       <div>
         <label htmlFor="features" className="block text-lg font-semibold text-gray-700 mb-2">
-          Features (optional)
+          Features
         </label>
         <textarea
           id="features"
@@ -178,7 +222,7 @@ export function ItemForm({
       {/* Size */}
       <div>
         <label htmlFor="size" className="block text-lg font-semibold text-gray-700 mb-2">
-          Size (optional)
+          Size
         </label>
         <input
           type="text"
@@ -194,7 +238,7 @@ export function ItemForm({
       {/* Shape */}
       <div>
         <label htmlFor="shape" className="block text-lg font-semibold text-gray-700 mb-2">
-          Shape (optional)
+          Shape
         </label>
         <input
           type="text"
@@ -210,7 +254,7 @@ export function ItemForm({
       {/* Color */}
       <div>
         <label htmlFor="color" className="block text-lg font-semibold text-gray-700 mb-2">
-          Color (optional)
+          Color
         </label>
         <input
           type="text"
@@ -226,7 +270,7 @@ export function ItemForm({
       {/* Weight */}
       <div>
         <label htmlFor="weight" className="block text-lg font-semibold text-gray-700 mb-2">
-          Weight (optional)
+          Weight
         </label>
         <input
           type="text"
@@ -247,7 +291,7 @@ export function ItemForm({
       {/* Location */}
       <div>
         <label htmlFor="location" className="block text-lg font-semibold text-gray-700 mb-2">
-          Location (optional)
+          Location
         </label>
         <input
           type="text"
@@ -264,7 +308,7 @@ export function ItemForm({
       {/* Associated With */}
       <div>
         <label htmlFor="associated_with" className="block text-lg font-semibold text-gray-700 mb-2">
-          Associated With (optional)
+          Associated With
         </label>
         <textarea
           id="associated_with"

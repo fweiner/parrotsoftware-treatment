@@ -21,7 +21,7 @@ interface SpeechRecognitionState {
 }
 
 interface UseSpeechRecognitionOptions {
-  onResult?: (transcript: string, isFinal: boolean) => void
+  onResult?: (transcript: string, isFinal: boolean, confidence?: number) => void
   onError?: (error: string) => void
   continuous?: boolean
   interimResults?: boolean
@@ -98,13 +98,21 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
     recognition.onresult = (event: any) => {
       let interimTranscript = ''
       let finalTranscript = ''
+      let confidence: number | undefined
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript
+        const result = event.results[i][0]
+        const transcript = result.transcript
         if (event.results[i].isFinal) {
           finalTranscript += transcript + ' '
+          // Capture confidence from final result (0-1 scale)
+          confidence = result.confidence
         } else {
           interimTranscript += transcript
+          // Also capture confidence from interim if available
+          if (result.confidence !== undefined) {
+            confidence = result.confidence
+          }
         }
       }
 
@@ -117,9 +125,9 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       // Use ref to get latest callback without re-initializing recognition
       if (onResultRef.current) {
         if (finalTranscript) {
-          onResultRef.current(finalTranscript.trim(), true)
+          onResultRef.current(finalTranscript.trim(), true, confidence)
         } else if (interimTranscript) {
-          onResultRef.current(interimTranscript.trim(), false)
+          onResultRef.current(interimTranscript.trim(), false, confidence)
         }
       }
     }

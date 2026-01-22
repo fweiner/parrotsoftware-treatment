@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { extractAnswer } from '@/lib/matching/answerMatcher'
 
 interface SpeechRecognitionButtonProps {
-  onResult: (transcript: string) => void
+  onResult: (transcript: string, confidence?: number) => void
   disabled?: boolean
   resetTrigger?: number // Increment this to force reset
   timer?: number // Timer value for better disabled message
@@ -23,21 +23,78 @@ export default function SpeechRecognitionButton({
   onStartListening,
   autoStart = false,
 }: SpeechRecognitionButtonProps) {
+  const lastInterimRef = useRef<string>('')
+  const lastConfidenceRef = useRef<number | undefined>(undefined)
+  const interimTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const hasSubmittedRef = useRef<boolean>(false)
+
+  // Function to submit an answer
+  const submitAnswer = useCallback((transcript: string, confidence?: number) => {
+    if (hasSubmittedRef.current) return
+    hasSubmittedRef.current = true
+    const answer = extractAnswer(transcript)
+    onResult(answer, confidence)
+  }, [onResult])
+
   const { isListening, isSupported, error, start, stop, transcript, abort } =
     useSpeechRecognition({
       continuous: true, // Keep listening until we manually stop
-      onResult: (transcript, isFinal) => {
+      onResult: (transcript, isFinal, confidence) => {
+        // Clear any pending interim timer
+        if (interimTimerRef.current) {
+          clearTimeout(interimTimerRef.current)
+          interimTimerRef.current = null
+        }
+
+        // Store confidence for later use
+        if (confidence !== undefined) {
+          lastConfidenceRef.current = confidence
+        }
+
         if (isFinal) {
-          const answer = extractAnswer(transcript)
-          onResult(answer)
-          // Stop recognition after getting final result
+          submitAnswer(transcript, confidence)
           stop()
+        } else {
+          // For interim results, if stable for 1.5 seconds, accept it
+          lastInterimRef.current = transcript
+          interimTimerRef.current = setTimeout(() => {
+            if (lastInterimRef.current && !hasSubmittedRef.current) {
+              console.log('Accepting stable interim result:', lastInterimRef.current)
+              submitAnswer(lastInterimRef.current, lastConfidenceRef.current)
+              stop()
+            }
+          }, 1500)
         }
       },
       onError: (error) => {
+        // Suppress 'no-speech' error - it's expected when user hasn't spoken yet
+        if (error === 'no-speech' || error?.includes?.('no-speech')) {
+          console.log('No speech detected - user can try again')
+          return
+        }
         console.error('Speech recognition error:', error)
       },
     })
+
+  // Reset hasSubmitted when resetTrigger changes
+  useEffect(() => {
+    hasSubmittedRef.current = false
+    lastInterimRef.current = ''
+    lastConfidenceRef.current = undefined
+    if (interimTimerRef.current) {
+      clearTimeout(interimTimerRef.current)
+      interimTimerRef.current = null
+    }
+  }, [resetTrigger])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (interimTimerRef.current) {
+        clearTimeout(interimTimerRef.current)
+      }
+    }
+  }, [])
 
   // Auto-start listening when component mounts if autoStart is true
   useEffect(() => {

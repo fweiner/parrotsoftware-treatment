@@ -588,7 +588,8 @@ def test_create_session_success(app, client, mock_user_id, mock_db):
         {"id": "contact-1", "name": "Barbara", "relationship": "spouse", "photo_url": "url1"},
         {"id": "contact-2", "name": "Max", "relationship": "pet", "photo_url": "url2"}
     ]
-    mock_db.query.return_value = contacts
+    # First query is for contacts, second is for items (empty)
+    mock_db.query.side_effect = [contacts, []]
     mock_db.insert.return_value = [{
         "id": "session-123",
         "user_id": mock_user_id,
@@ -628,7 +629,8 @@ def test_create_session_with_specific_contacts(app, client, mock_user_id, mock_d
         {"id": "contact-2", "name": "Max", "relationship": "pet", "photo_url": "url2"},
         {"id": "contact-3", "name": "John", "relationship": "friend", "photo_url": "url3"}
     ]
-    mock_db.query.return_value = contacts
+    # First query is for contacts, second is for items (empty)
+    mock_db.query.side_effect = [contacts, []]
     mock_db.insert.return_value = [{
         "id": "session-456",
         "user_id": mock_user_id,
@@ -662,7 +664,8 @@ def test_create_session_insufficient_contacts(app, client, mock_user_id, mock_db
     app.dependency_overrides[get_current_user_id] = override_get_current_user_id
     app.dependency_overrides[get_db] = override_get_db
 
-    mock_db.query.return_value = [{"id": "contact-1", "name": "Barbara"}]
+    # First query is for contacts (1 contact), second is for items (empty)
+    mock_db.query.side_effect = [[{"id": "contact-1", "name": "Barbara"}], []]
 
     response = client.post(
         "/api/life-words/sessions",
@@ -671,7 +674,7 @@ def test_create_session_insufficient_contacts(app, client, mock_user_id, mock_db
     )
 
     assert response.status_code == 400
-    assert "At least 2 contacts required" in response.json()["detail"]
+    assert "At least 2" in response.json()["detail"]
 
 
 def test_create_session_no_contacts(app, client, mock_user_id, mock_db):
@@ -688,7 +691,8 @@ def test_create_session_no_contacts(app, client, mock_user_id, mock_db):
     app.dependency_overrides[get_current_user_id] = override_get_current_user_id
     app.dependency_overrides[get_db] = override_get_db
 
-    mock_db.query.return_value = []
+    # First query is for contacts (empty), second is for items (empty)
+    mock_db.query.side_effect = [[], []]
 
     response = client.post(
         "/api/life-words/sessions",

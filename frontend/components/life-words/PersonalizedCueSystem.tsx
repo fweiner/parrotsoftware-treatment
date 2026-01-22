@@ -24,7 +24,7 @@ interface PersonalContact {
 interface PersonalizedCueSystemProps {
   contact: PersonalContact
   cuesUsed: number
-  onAnswer: (answer: string, isCorrect: boolean) => void
+  onAnswer: (answer: string, isCorrect: boolean, confidence?: number) => void
   onFinalAnswer: () => void
   onContinue: () => void
   voiceGender?: VoiceGender
@@ -308,14 +308,14 @@ export function PersonalizedCueSystem({
     onFinalAnswer()
   }
 
-  const handleAnswer = (transcript: string) => {
+  const handleAnswer = (transcript: string, confidence?: number) => {
     const isCorrect = matchPersonalAnswer(transcript, contact)
 
     if (isCorrect) {
-      onAnswer(transcript, true)
+      onAnswer(transcript, true, confidence)
     } else {
       if (currentCueLevel < 7) {
-        onAnswer(transcript, false)
+        onAnswer(transcript, false, confidence)
       } else {
         if (!finalAnswerCalledRef.current) {
           handleFinalAnswer()
