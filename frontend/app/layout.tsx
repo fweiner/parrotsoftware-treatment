@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Parrot Software Treatment - Cognitive Therapy for Seniors",
-  description: "Accessible cognitive and memory treatment applications designed for users 65+ years old",
+  title: "Parrot Software - Treatment for people with aphasia, brain damage, and memory problems",
+  description: "Accessible treatment applications for people with aphasia, brain damage, and memory problems",
 };
 
 export default function RootLayout({
