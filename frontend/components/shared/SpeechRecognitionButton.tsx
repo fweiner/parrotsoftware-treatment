@@ -10,7 +10,7 @@ interface SpeechRecognitionButtonProps {
   resetTrigger?: number // Increment this to force reset
   timer?: number // Timer value for better disabled message
   isCorrectAnswer?: boolean // Indicates if this is a correct answer (vs timer expired)
-  onStartListening?: () => void // Callback when user starts listening
+  onStartListening?: () => void | Promise<void> // Callback when user starts listening (can be async)
   autoStart?: boolean // Auto-start listening when component mounts
 }
 
@@ -113,8 +113,16 @@ export default function SpeechRecognitionButton({
     if (autoStart && isSupported && !disabled) {
       console.log('Auto-starting speech recognition')
       // Small delay to ensure everything is ready
-      const timer = setTimeout(() => {
-        onStartListening?.()
+      const timer = setTimeout(async () => {
+        // Wait for onStartListening to complete (e.g., TTS prompt) before starting recognition
+        // This prevents speech recognition from picking up the TTS audio
+        try {
+          await onStartListening?.()
+        } catch (e) {
+          console.warn('onStartListening failed:', e)
+        }
+        // Add small delay after TTS to avoid echo pickup
+        await new Promise(resolve => setTimeout(resolve, 300))
         start()
       }, 500)
       return () => clearTimeout(timer)
@@ -154,7 +162,7 @@ export default function SpeechRecognitionButton({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetTrigger]) // Only depend on resetTrigger to avoid infinite loops
 
-  const handleClick = () => {
+  const handleClick = async () => {
     console.log('Button clicked', { isListening, disabled })
     if (isListening) {
       console.log('Stopping recognition')
@@ -162,7 +170,12 @@ export default function SpeechRecognitionButton({
     } else {
       console.log('Starting recognition')
       // Call onStartListening callback before starting (for first image prompt)
-      onStartListening?.()
+      // Wait for it to complete (e.g., TTS) before starting recognition
+      try {
+        await onStartListening?.()
+      } catch (e) {
+        console.warn('onStartListening failed:', e)
+      }
       start()
     }
   }
