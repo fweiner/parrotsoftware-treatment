@@ -110,6 +110,20 @@ export default function SpeechRecognitionButton({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart, isSupported])
 
+  // Auto-restart listening if it stops without a result (for autoStart mode)
+  useEffect(() => {
+    if (autoStart && isSupported && !disabled && !isListening && !hasSubmittedRef.current) {
+      console.log('Auto-restarting speech recognition after stop')
+      const timer = setTimeout(() => {
+        if (!hasSubmittedRef.current && !disabled) {
+          start()
+        }
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, isSupported, isListening, disabled])
+
   // Reset when resetTrigger changes (e.g., new image, timeout)
   useEffect(() => {
     if (isListening) {
