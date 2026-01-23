@@ -121,6 +121,30 @@ def format_zip_for_tts(zip_code: str) -> str:
     return ' '.join(digits)
 
 
+# US State abbreviation to full name mapping
+STATE_ABBREVIATIONS = {
+    "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas",
+    "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware",
+    "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho",
+    "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas",
+    "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+    "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi",
+    "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada",
+    "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York",
+    "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+    "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+    "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah",
+    "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia",
+    "WI": "Wisconsin", "WY": "Wyoming", "DC": "District of Columbia",
+}
+
+
+def format_state_for_tts(state: str) -> str:
+    """Expand state abbreviation to full name for TTS."""
+    state_upper = str(state).strip().upper()
+    return STATE_ABBREVIATIONS.get(state_upper, state)
+
+
 def format_date_for_display(date_value) -> str:
     """Format a date value for display."""
     if date_value is None:
@@ -184,11 +208,13 @@ def generate_information_items(profile: Dict[str, Any]) -> List[InformationItem]
         else:
             display_value = str(value)
 
-        # Format for TTS (spoken version - digits read individually)
+        # Format for TTS (spoken version - digits read individually, abbreviations expanded)
         if field_name == "phone_number":
             tts_value = format_phone_for_tts(value)
         elif field_name == "address_zip":
             tts_value = format_zip_for_tts(value)
+        elif field_name == "address_state":
+            tts_value = format_state_for_tts(value)
         elif field_name == "full_name":
             # Use pronunciation if available, otherwise use the actual name
             pronunciation = profile.get("full_name_pronunciation")

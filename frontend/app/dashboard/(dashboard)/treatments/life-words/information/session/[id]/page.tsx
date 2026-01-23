@@ -12,7 +12,8 @@ import { matchInformationAnswer } from '@/lib/matching/informationMatcher'
 interface InformationItem {
   field_name: string
   field_label: string
-  teach_text: string
+  teach_text: string // TTS version with pronunciation/formatting
+  display_text: string // Display version with actual values
   question_text: string
   expected_answer: string
   hint_text: string
@@ -214,6 +215,28 @@ export default function InformationPracticeSessionPage() {
       return digits.split('').join(' ')
     }
 
+    // US State abbreviation to full name mapping
+    const STATE_ABBREVIATIONS: Record<string, string> = {
+      "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas",
+      "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware",
+      "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho",
+      "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas",
+      "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+      "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi",
+      "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada",
+      "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York",
+      "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+      "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+      "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah",
+      "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia",
+      "WI": "Wisconsin", "WY": "Wyoming", "DC": "District of Columbia",
+    }
+
+    const formatStateForTTS = (state: string): string => {
+      const stateUpper = String(state).trim().toUpperCase()
+      return STATE_ABBREVIATIONS[stateUpper] || state
+    }
+
     const generateHint = (value: string, hintType: string): string => {
       if (!value) return ''
       const valueStr = String(value).trim()
@@ -240,12 +263,14 @@ export default function InformationPracticeSessionPage() {
 
     return shuffled.map(({ fieldName, config, value }) => {
       let displayValue = fieldName === 'date_of_birth' ? formatDate(value) : String(value)
-      // Format for TTS (spoken version - digits read individually)
+      // Format for TTS (spoken version - digits read individually, abbreviations expanded)
       let ttsValue = displayValue
       if (fieldName === 'phone_number') {
         ttsValue = formatPhoneForTTS(value)
       } else if (fieldName === 'address_zip') {
         ttsValue = formatZipForTTS(value)
+      } else if (fieldName === 'address_state') {
+        ttsValue = formatStateForTTS(value)
       } else if (fieldName === 'full_name') {
         // Use pronunciation if available
         const pronunciation = profile.full_name_pronunciation
@@ -258,6 +283,7 @@ export default function InformationPracticeSessionPage() {
         field_name: fieldName,
         field_label: config.label,
         teach_text: config.teachTemplate.replace('{value}', ttsValue),
+        display_text: config.teachTemplate.replace('{value}', displayValue),
         question_text: config.question,
         expected_answer: displayValue,
         hint_text: generateHint(hintValue, config.hintType),
@@ -798,10 +824,10 @@ export default function InformationPracticeSessionPage() {
           </span>
         </div>
 
-        {/* Teach text */}
+        {/* Teach text (display version - actual values, not TTS formatting) */}
         <div className="bg-teal-50 border-2 border-teal-300 rounded-lg p-8 mb-8 max-w-2xl">
           <p className="text-3xl md:text-4xl text-teal-800 text-center font-medium">
-            {currentItem.teach_text}
+            {currentItem.display_text}
           </p>
         </div>
 
@@ -1016,14 +1042,14 @@ export default function InformationPracticeSessionPage() {
           {isAnswering && !showFeedback ? (
             <div className="flex flex-col items-center gap-4">
               <p className="text-lg text-gray-600 mb-2">
-                {phase === 'hint' ? 'Try again - click the microphone to answer' : 'Take your time, then click the microphone to answer'}
+                {phase === 'hint' ? 'Try again - listening for your answer...' : 'Listening for your answer...'}
               </p>
               <SpeechRecognitionButton
                 key={`speech-${currentIndex}-${phase}`}
                 onResult={handleAnswer}
                 disabled={isProcessingAnswer}
                 resetTrigger={currentIndex}
-                autoStart={false}
+                autoStart={true}
               />
               <p className="text-sm text-gray-500 mt-2">
                 30 seconds to answer
