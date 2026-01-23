@@ -246,6 +246,12 @@ export default function InformationPracticeSessionPage() {
         ttsValue = formatPhoneForTTS(value)
       } else if (fieldName === 'address_zip') {
         ttsValue = formatZipForTTS(value)
+      } else if (fieldName === 'full_name') {
+        // Use pronunciation if available
+        const pronunciation = profile.full_name_pronunciation
+        if (pronunciation && String(pronunciation).trim()) {
+          ttsValue = String(pronunciation)
+        }
       }
       let hintValue = fieldName === 'date_of_birth' ? displayValue.split(' ')[0] || displayValue : displayValue
       return {
