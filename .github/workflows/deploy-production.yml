@@ -91,7 +91,7 @@ jobs:
             --region $GCP_REGION \
             --project $GCP_PROJECT_ID \
             --allow-unauthenticated \
-            --set-env-vars="GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID,ENVIRONMENT=production,ALLOWED_ORIGINS=https://treatment-web-898169248822.us-central1.run.app;https://app.parrotsoftware.com" \
+            --set-env-vars="GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID,ENVIRONMENT=production,ALLOWED_ORIGINS=https://treatment-web-898169248822.us-central1.run.app;https://words.parrotsoftware.com" \
             --set-secrets="$SECRETS" \
             --memory 512Mi \
             --cpu 1 \
