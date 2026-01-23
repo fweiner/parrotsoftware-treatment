@@ -57,12 +57,14 @@ const PERSONALITY_LABELS: Record<string, string> = {
 // Generate cue types based on available contact data
 function getCueTypes(contact: PersonalContact) {
   const cues: { level: number; name: string; getText: () => string }[] = []
+  const isItem = contact.relationship === 'item'
+  const possessivePronoun = isItem ? 'The' : 'Their'
 
   // Level 1: First letter (always available)
   cues.push({
     level: 1,
     name: 'First Letter',
-    getText: () => `Their name starts with '${contact.first_letter || contact.name[0].toUpperCase()}'`
+    getText: () => `${possessivePronoun} name starts with '${contact.first_letter || contact.name[0].toUpperCase()}'`
   })
 
   // Level 2: Relationship (always available)
@@ -99,7 +101,7 @@ function getCueTypes(contact: PersonalContact) {
   cues.push({
     level: 4,
     name: 'Phonemic',
-    getText: () => `Their name sounds like '${firstTwoLetters}...'`
+    getText: () => `${possessivePronoun} name sounds like '${firstTwoLetters}...'`
   })
 
   // Level 5: Association, Interests, Social Behavior, or Location (meaningful memory cues)
@@ -145,7 +147,7 @@ function getCueTypes(contact: PersonalContact) {
   cues.push({
     level: 6,
     name: 'Name Shown',
-    getText: () => `Their name is: ${contact.name}`
+    getText: () => `${possessivePronoun} name is: ${contact.name}`
   })
 
   // Level 7: Full name + audio (repetition)
