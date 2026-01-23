@@ -23,10 +23,18 @@ interface ProgressSummary {
     avg_response_time_ms: number
     avg_clarity: number
   }
+  information_practice: {
+    sessions: number
+    correct: number
+    total: number
+    accuracy: number
+    avg_response_time_sec: number
+    hint_rate: number
+  }
 }
 
 interface SessionHistory {
-  type: 'name' | 'question'
+  type: 'name' | 'question' | 'information'
   date: string
   total_correct: number
   total_incorrect?: number
@@ -35,6 +43,7 @@ interface SessionHistory {
   avg_response_time?: number
   avg_cues_used?: number
   avg_clarity?: number
+  hints_used?: number
 }
 
 export default function LifeWordsProgressPage() {
@@ -138,8 +147,8 @@ export default function LifeWordsProgressPage() {
 
   const overallAccuracy = summary
     ? Math.round(
-        ((summary.name_practice.correct + summary.question_practice.correct) /
-          Math.max(1, summary.name_practice.total + summary.question_practice.total)) *
+        ((summary.name_practice.correct + summary.question_practice.correct + (summary.information_practice?.correct || 0)) /
+          Math.max(1, summary.name_practice.total + summary.question_practice.total + (summary.information_practice?.total || 0))) *
           100
       )
     : 0
@@ -191,13 +200,13 @@ export default function LifeWordsProgressPage() {
               </div>
               <div className="bg-purple-50 rounded-lg p-4 text-center">
                 <div className="text-4xl font-bold text-purple-600">
-                  {(summary?.name_practice.correct || 0) + (summary?.question_practice.correct || 0)}
+                  {(summary?.name_practice.correct || 0) + (summary?.question_practice.correct || 0) + (summary?.information_practice?.correct || 0)}
                 </div>
                 <div className="text-gray-600">Correct Answers</div>
               </div>
               <div className="bg-amber-50 rounded-lg p-4 text-center">
                 <div className="text-4xl font-bold text-amber-600">
-                  {(summary?.name_practice.total || 0) + (summary?.question_practice.total || 0)}
+                  {(summary?.name_practice.total || 0) + (summary?.question_practice.total || 0) + (summary?.information_practice?.total || 0)}
                 </div>
                 <div className="text-gray-600">Total Attempts</div>
               </div>
@@ -205,7 +214,7 @@ export default function LifeWordsProgressPage() {
           </div>
 
           {/* Practice Type Breakdown */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {/* Name Practice */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-bold mb-4 text-gray-900 flex items-center">
@@ -341,6 +350,74 @@ export default function LifeWordsProgressPage() {
                 </div>
               </div>
             </div>
+
+            {/* Information Practice */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-bold mb-4 text-gray-900 flex items-center">
+                <span className="text-2xl mr-2">ℹ️</span>
+                Information Practice
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Sessions Completed</span>
+                  <span className="font-bold text-lg">{summary?.information_practice?.sessions || 0}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Correct Answers</span>
+                  <span className="font-bold text-lg text-green-600">
+                    {summary?.information_practice?.correct || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Total Questions</span>
+                  <span className="font-bold text-lg">{summary?.information_practice?.total || 0}</span>
+                </div>
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-700 font-medium">Accuracy</span>
+                    <span className="font-bold text-xl text-teal-600">
+                      {summary?.information_practice?.accuracy || 0}%
+                    </span>
+                  </div>
+                  <div className="bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-teal-600 h-3 rounded-full transition-all"
+                      style={{ width: `${summary?.information_practice?.accuracy || 0}%` }}
+                    />
+                  </div>
+                </div>
+                {/* Response Time */}
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-700 font-medium">Avg Response Time</span>
+                    <span className="font-bold text-lg text-indigo-600">
+                      {summary?.information_practice?.avg_response_time_sec
+                        ? `${summary.information_practice.avg_response_time_sec.toFixed(1)}s`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+                {/* Hint Rate */}
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-700 font-medium">Hint Usage Rate</span>
+                    <span className="font-bold text-lg text-amber-600">
+                      {summary?.information_practice?.hint_rate !== undefined
+                        ? `${summary.information_practice.hint_rate}%`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  {(summary?.information_practice?.hint_rate ?? 0) > 0 && (
+                    <div className="bg-gray-200 rounded-full h-3">
+                      <div
+                        className="bg-amber-500 h-3 rounded-full transition-all"
+                        style={{ width: `${summary?.information_practice?.hint_rate || 0}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Session History */}
@@ -355,11 +432,11 @@ export default function LifeWordsProgressPage() {
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">
-                        {session.type === 'name' ? '👤' : '❓'}
+                        {session.type === 'name' ? '👤' : session.type === 'question' ? '❓' : 'ℹ️'}
                       </span>
                       <div>
                         <div className="font-medium text-gray-900">
-                          {session.type === 'name' ? 'Name Practice' : 'Question Practice'}
+                          {session.type === 'name' ? 'Name Practice' : session.type === 'question' ? 'Question Practice' : 'Information Practice'}
                         </div>
                         <div className="text-sm text-gray-500">
                           {formatDate(session.date)}

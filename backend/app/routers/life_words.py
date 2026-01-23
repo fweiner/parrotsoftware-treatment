@@ -464,6 +464,14 @@ async def get_life_words_progress(
             order="completed_at.desc"
         )
 
+        # Get all completed information sessions
+        info_sessions = await db.query(
+            "life_words_information_sessions",
+            select="*",
+            filters={"user_id": user_id, "is_completed": True},
+            order="completed_at.desc"
+        )
+
         # Get all name practice responses
         name_responses = await db.query(
             "life_words_responses",
@@ -478,15 +486,26 @@ async def get_life_words_progress(
             filters={"user_id": user_id}
         )
 
+        # Get all information responses
+        info_responses = await db.query(
+            "life_words_information_responses",
+            select="*",
+            filters={"user_id": user_id}
+        )
+
         # Calculate overall stats
         total_name_sessions = len(name_sessions) if name_sessions else 0
         total_question_sessions = len(question_sessions) if question_sessions else 0
+        total_info_sessions = len(info_sessions) if info_sessions else 0
 
         name_correct = sum(1 for r in (name_responses or []) if r.get("is_correct"))
         name_total = len(name_responses) if name_responses else 0
 
         question_correct = sum(1 for r in (question_responses or []) if r.get("is_correct"))
         question_total = len(question_responses) if question_responses else 0
+
+        info_correct = sum(1 for r in (info_responses or []) if r.get("is_correct"))
+        info_total = len(info_responses) if info_responses else 0
 
         # Calculate response time stats for name practice
         name_response_times = [
@@ -531,6 +550,27 @@ async def get_life_words_progress(
             if name_confidence_scores else 0
         )
 
+        # Calculate response time stats for information practice
+        info_response_times = [
+            float(r.get("response_time") or 0)
+            for r in (info_responses or [])
+            if r.get("response_time")
+        ]
+        info_avg_response_time = (
+            round(sum(info_response_times) / len(info_response_times), 1)
+            if info_response_times else 0
+        )
+
+        # Calculate hints used for information practice
+        info_hints_used = [
+            1 if r.get("used_hint") else 0
+            for r in (info_responses or [])
+        ]
+        info_hint_rate = (
+            round(sum(info_hints_used) / len(info_hints_used) * 100, 1)
+            if info_hints_used else 0
+        )
+
         # Build session history for charts (last 20 sessions)
         session_history = []
 
@@ -556,12 +596,23 @@ async def get_life_words_progress(
                 "avg_clarity": s.get("average_clarity_score", 0),
             })
 
+        for s in (info_sessions or [])[:15]:
+            session_history.append({
+                "type": "information",
+                "date": s.get("completed_at"),
+                "total_correct": s.get("total_correct", 0),
+                "total_questions": s.get("total_questions", 5),
+                "accuracy": round((s.get("total_correct", 0) / max(1, s.get("total_questions", 5))) * 100, 1),
+                "avg_response_time": s.get("average_response_time", 0),
+                "hints_used": s.get("hints_used", 0),
+            })
+
         # Sort by date descending
         session_history.sort(key=lambda x: x.get("date") or "", reverse=True)
 
         return {
             "summary": {
-                "total_sessions": total_name_sessions + total_question_sessions,
+                "total_sessions": total_name_sessions + total_question_sessions + total_info_sessions,
                 "name_practice": {
                     "sessions": total_name_sessions,
                     "correct": name_correct,
@@ -577,6 +628,14 @@ async def get_life_words_progress(
                     "accuracy": round((question_correct / max(1, question_total)) * 100, 1),
                     "avg_response_time_ms": question_avg_response_time,
                     "avg_clarity": question_avg_clarity,
+                },
+                "information_practice": {
+                    "sessions": total_info_sessions,
+                    "correct": info_correct,
+                    "total": info_total,
+                    "accuracy": round((info_correct / max(1, info_total)) * 100, 1),
+                    "avg_response_time_sec": info_avg_response_time,
+                    "hint_rate": info_hint_rate,
                 }
             },
             "session_history": session_history[:20]
