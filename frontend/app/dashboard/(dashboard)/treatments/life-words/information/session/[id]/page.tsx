@@ -729,7 +729,7 @@ export default function InformationPracticeSessionPage() {
         <div className="text-center max-w-2xl">
           <h2 className="text-4xl font-bold text-teal-600 mb-6">Information Practice</h2>
           <p className="text-xl text-gray-700 mb-8">
-            You'll learn {items.length} pieces of personal information, then answer questions about them.
+            You'll learn to provide personal information to others.
           </p>
 
           <div className="bg-teal-50 border-2 border-teal-200 rounded-lg p-6 mb-8">
