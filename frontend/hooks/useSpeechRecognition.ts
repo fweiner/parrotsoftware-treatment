@@ -270,12 +270,12 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
 
     // Prevent multiple simultaneous start attempts
     if (isStartingRef.current) {
-      console.log('Already starting, ignoring click')
+      console.log('Already starting, ignoring start request')
       return
     }
 
     if (state.isListening) {
-      console.log('Already listening, ignoring click')
+      console.log('Already listening, ignoring start request')
       return
     }
 
@@ -292,6 +292,14 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       console.log('Calling recognition.start()')
       recognitionRef.current.start()
     } catch (error: any) {
+      // If start fails due to InvalidStateError, recognition may already be running
+      // Just log and reset our state - don't show error to user
+      if (error?.name === 'InvalidStateError') {
+        console.log('Recognition already started, ignoring')
+        isStartingRef.current = false
+        return
+      }
+
       // If start fails, reset listening state
       console.error('Error starting recognition:', error)
       setState((prev) => ({
