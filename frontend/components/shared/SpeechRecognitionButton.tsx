@@ -56,14 +56,18 @@ export default function SpeechRecognitionButton({
           stop()
         } else {
           // For interim results, if stable for 1.5 seconds, accept it
-          lastInterimRef.current = transcript
-          interimTimerRef.current = setTimeout(() => {
-            if (lastInterimRef.current && !hasSubmittedRef.current) {
-              console.log('Accepting stable interim result:', lastInterimRef.current)
-              submitAnswer(lastInterimRef.current, lastConfidenceRef.current)
-              stop()
-            }
-          }, 1500)
+          // Only store interim results that are at least 2 characters (to filter out noise)
+          if (transcript.trim().length >= 2) {
+            lastInterimRef.current = transcript
+            interimTimerRef.current = setTimeout(() => {
+              // Double-check the transcript is still meaningful before submitting
+              if (lastInterimRef.current && lastInterimRef.current.trim().length >= 2 && !hasSubmittedRef.current) {
+                console.log('Accepting stable interim result:', lastInterimRef.current)
+                submitAnswer(lastInterimRef.current, lastConfidenceRef.current)
+                stop()
+              }
+            }, 1500)
+          }
         }
       },
       onError: (error) => {
@@ -114,6 +118,15 @@ export default function SpeechRecognitionButton({
   useEffect(() => {
     if (autoStart && isSupported && !disabled && !isListening && !hasSubmittedRef.current) {
       console.log('Auto-restarting speech recognition after stop')
+      // Clear any pending interim timer to avoid submitting stale results
+      if (interimTimerRef.current) {
+        clearTimeout(interimTimerRef.current)
+        interimTimerRef.current = null
+      }
+      // Clear interim state before restarting
+      lastInterimRef.current = ''
+      lastConfidenceRef.current = undefined
+
       const timer = setTimeout(() => {
         if (!hasSubmittedRef.current && !disabled) {
           start()
