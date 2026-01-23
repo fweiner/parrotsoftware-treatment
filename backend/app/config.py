@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     # Resend
     resend_api_key: str
 
+    # AWS (for Amazon Polly TTS)
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_region: str = "us-east-1"
+
     # Application
     environment: str = "development"
     allowed_origins: str = "http://localhost:3000"

@@ -1,198 +1,128 @@
 /**
- * Text-to-speech utility using Web Speech API
+ * Text-to-speech utility using Amazon Polly via backend API
  */
-
-let synth: SpeechSynthesis | null = null
-
-if (typeof window !== 'undefined') {
-  synth = window.speechSynthesis
-}
 
 export type VoiceGender = 'male' | 'female' | 'neutral'
 
 export interface SpeechOptions {
-  rate?: number // 0.1 to 10, default 1
-  pitch?: number // 0 to 2, default 1
+  rate?: number // Not used with Polly, kept for interface compatibility
+  pitch?: number // Not used with Polly, kept for interface compatibility
   volume?: number // 0 to 1, default 1
-  lang?: string // Language code, default 'en-US'
-  voice?: SpeechSynthesisVoice
+  lang?: string // Not used with Polly, kept for interface compatibility
+  voice?: SpeechSynthesisVoice // Not used with Polly, kept for interface compatibility
   gender?: VoiceGender // Preferred voice gender
 }
+
+// Track current audio for stopping
+let currentAudio: HTMLAudioElement | null = null
 
 /**
  * Checks if text-to-speech is supported
  */
 export function isTTSSupported(): boolean {
-  return typeof window !== 'undefined' && 'speechSynthesis' in window
+  return typeof window !== 'undefined' && typeof Audio !== 'undefined'
 }
 
 /**
- * Gets available voices
+ * Gets available voices - returns empty array since Polly voices are server-side
  */
 export function getVoices(): SpeechSynthesisVoice[] {
-  if (!synth) return []
-  return synth.getVoices()
+  return []
 }
 
 /**
- * Finds a voice matching the preferred gender
- * Browser voices often have gender hints in their names
+ * Finds a voice matching the preferred gender - not used with Polly
  */
 export function getVoiceByGender(
   gender: VoiceGender,
   lang: string = 'en-US'
 ): SpeechSynthesisVoice | null {
-  const voices = getVoices()
-  if (voices.length === 0) return null
-
-  // Filter to matching language first
-  const langVoices = voices.filter(v => v.lang.startsWith(lang.split('-')[0]))
-  const voicesToSearch = langVoices.length > 0 ? langVoices : voices
-
-  // Common patterns for voice gender detection
-  const femalePatterns = ['female', 'woman', 'samantha', 'victoria', 'karen', 'moira', 'tessa', 'fiona', 'kate', 'susan', 'zira', 'hazel', 'eva']
-  const malePatterns = ['male', 'man', 'daniel', 'david', 'george', 'james', 'alex', 'fred', 'tom', 'mark', 'lee', 'guy']
-
-  for (const voice of voicesToSearch) {
-    const name = voice.name.toLowerCase()
-
-    if (gender === 'female') {
-      if (femalePatterns.some(p => name.includes(p))) {
-        return voice
-      }
-    } else if (gender === 'male') {
-      if (malePatterns.some(p => name.includes(p))) {
-        return voice
-      }
-    }
-  }
-
-  // If no gender match, return the first English voice or first voice available
-  const englishVoice = voicesToSearch.find(v => v.lang.startsWith('en'))
-  return englishVoice || voicesToSearch[0] || null
+  return null
 }
 
 /**
- * Speaks text using text-to-speech
- * Includes workaround for Chrome bug where onend doesn't fire
+ * Speaks text using Amazon Polly via backend API
  */
-export function speak(
+export async function speak(
   text: string,
   options: SpeechOptions = {}
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!synth) {
-      reject(new Error('Speech synthesis not supported'))
-      return
+  if (!text || !text.trim()) {
+    return
+  }
+
+  // Stop any ongoing speech
+  stopSpeaking()
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+  try {
+    const response = await fetch(`${apiUrl}/api/speech/tts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: text,
+        gender: options.gender || 'neutral',
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`TTS API error: ${response.status} - ${errorText}`)
     }
 
-    // Cancel any ongoing speech
-    synth.cancel()
+    // Get the audio blob
+    const audioBlob = await response.blob()
+    const audioUrl = URL.createObjectURL(audioBlob)
 
-    const utterance = new SpeechSynthesisUtterance(text)
+    // Play the audio
+    return new Promise((resolve, reject) => {
+      const audio = new Audio(audioUrl)
+      currentAudio = audio
 
-    utterance.rate = options.rate ?? 1
-    utterance.pitch = options.pitch ?? 1
-    utterance.volume = options.volume ?? 1
-    utterance.lang = options.lang ?? 'en-US'
+      // Set volume
+      audio.volume = options.volume ?? 1
 
-    // Set voice: explicit voice takes priority, then gender preference
-    if (options.voice) {
-      utterance.voice = options.voice
-    } else if (options.gender) {
-      const genderVoice = getVoiceByGender(options.gender, options.lang ?? 'en-US')
-      if (genderVoice) {
-        utterance.voice = genderVoice
-      }
-    }
-
-    let resolved = false
-    let speechStarted = false
-    let pollInterval: ReturnType<typeof setInterval> | null = null
-    let fallbackTimeout: ReturnType<typeof setTimeout> | null = null
-
-    const cleanup = () => {
-      resolved = true
-      if (pollInterval) clearInterval(pollInterval)
-      if (fallbackTimeout) clearTimeout(fallbackTimeout)
-    }
-
-    utterance.onstart = () => {
-      speechStarted = true
-    }
-
-    utterance.onend = () => {
-      if (!resolved) {
-        cleanup()
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl)
+        currentAudio = null
         resolve()
       }
-    }
 
-    utterance.onerror = (error) => {
-      if (!resolved) {
-        cleanup()
-        // Extract error message from SpeechSynthesisErrorEvent
-        const errorMessage = error.error
-          ? `Speech synthesis error: ${error.error}`
-          : 'Speech synthesis failed'
-        reject(new Error(errorMessage))
+      audio.onerror = (error) => {
+        URL.revokeObjectURL(audioUrl)
+        currentAudio = null
+        reject(new Error('Audio playback failed'))
       }
-    }
 
-    synth.speak(utterance)
-
-    // Chrome bug workaround: poll speaking state, but only after speech has started
-    // Wait 500ms before polling to ensure speech has time to begin
-    setTimeout(() => {
-      if (resolved) return
-      pollInterval = setInterval(() => {
-        // Only check for completion if speech has started
-        if (!resolved && speechStarted && synth && !synth.speaking && !synth.pending) {
-          cleanup()
-          resolve()
-        }
-      }, 100)
-    }, 500)
-
-    // Fallback timeout: estimate ~200ms per word + 3s buffer (more conservative)
-    const wordCount = text.split(/\s+/).length
-    const estimatedDuration = Math.max(wordCount * 200 + 3000, 5000)
-    fallbackTimeout = setTimeout(() => {
-      if (!resolved) {
-        cleanup()
-        resolve() // Resolve anyway after timeout
-      }
-    }, estimatedDuration)
-  })
+      audio.play().catch((error) => {
+        URL.revokeObjectURL(audioUrl)
+        currentAudio = null
+        reject(new Error(`Failed to play audio: ${error.message}`))
+      })
+    })
+  } catch (error) {
+    console.error('TTS error:', error)
+    throw error
+  }
 }
 
 /**
  * Stops any ongoing speech
  */
 export function stopSpeaking(): void {
-  if (synth) {
-    synth.cancel()
+  if (currentAudio) {
+    currentAudio.pause()
+    currentAudio.currentTime = 0
+    currentAudio = null
   }
 }
 
 /**
- * Waits for voices to be loaded (browsers load them asynchronously)
+ * Waits for voices to be loaded - returns immediately since Polly voices are server-side
  */
 export function waitForVoices(): Promise<SpeechSynthesisVoice[]> {
-  return new Promise((resolve) => {
-    if (!synth) {
-      resolve([])
-      return
-    }
-
-    const voices = synth.getVoices()
-    if (voices.length > 0) {
-      resolve(voices)
-      return
-    }
-
-    synth.onvoiceschanged = () => {
-      resolve(synth!.getVoices())
-    }
-  })
+  return Promise.resolve([])
 }
