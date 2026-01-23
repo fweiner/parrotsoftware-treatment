@@ -463,6 +463,13 @@ export default function HowItWorksPage() {
               </div>
               <p className="text-sm text-gray-600">Items and belongings</p>
             </div>
+            <div className="bg-white rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl">⚙️</span>
+                <span className="font-bold">Settings</span>
+              </div>
+              <p className="text-sm text-gray-600">Voice and answer matching settings</p>
+            </div>
           </div>
         </div>
 
