@@ -123,12 +123,17 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       }))
 
       // Use ref to get latest callback without re-initializing recognition
+      // Only call onResult if there's actual speech content (not empty/whitespace)
       if (onResultRef.current) {
-        if (finalTranscript) {
-          onResultRef.current(finalTranscript.trim(), true, confidence)
-        } else if (interimTranscript) {
-          onResultRef.current(interimTranscript.trim(), false, confidence)
+        const trimmedFinal = finalTranscript.trim()
+        const trimmedInterim = interimTranscript.trim()
+
+        if (trimmedFinal.length > 0) {
+          onResultRef.current(trimmedFinal, true, confidence)
+        } else if (trimmedInterim.length > 0) {
+          onResultRef.current(trimmedInterim, false, confidence)
         }
+        // Don't call onResult for empty transcripts - this prevents incorrect scoring from silence
       }
     }
 

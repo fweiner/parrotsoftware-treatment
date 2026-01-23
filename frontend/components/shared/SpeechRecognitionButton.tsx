@@ -31,6 +31,14 @@ export default function SpeechRecognitionButton({
   // Function to submit an answer
   const submitAnswer = useCallback((transcript: string, confidence?: number) => {
     if (hasSubmittedRef.current) return
+
+    // Don't submit empty or very short transcripts (likely noise or silence)
+    const trimmed = transcript.trim()
+    if (trimmed.length < 2) {
+      console.log('Ignoring empty/short transcript:', JSON.stringify(trimmed))
+      return
+    }
+
     hasSubmittedRef.current = true
     const answer = extractAnswer(transcript)
     onResult(answer, confidence)
