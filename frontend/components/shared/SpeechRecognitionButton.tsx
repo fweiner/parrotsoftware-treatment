@@ -27,6 +27,7 @@ export default function SpeechRecognitionButton({
   const lastConfidenceRef = useRef<number | undefined>(undefined)
   const interimTimerRef = useRef<NodeJS.Timeout | null>(null)
   const hasSubmittedRef = useRef<boolean>(false)
+  const hasEverListenedRef = useRef<boolean>(false) // Track if we've ever started listening
 
   // Function to submit an answer
   const submitAnswer = useCallback((transcript: string, confidence?: number) => {
@@ -88,9 +89,10 @@ export default function SpeechRecognitionButton({
       },
     })
 
-  // Reset hasSubmitted when resetTrigger changes
+  // Reset state when resetTrigger changes (new item)
   useEffect(() => {
     hasSubmittedRef.current = false
+    hasEverListenedRef.current = false
     lastInterimRef.current = ''
     lastConfidenceRef.current = undefined
     if (interimTimerRef.current) {
@@ -123,6 +125,7 @@ export default function SpeechRecognitionButton({
         }
         // Add small delay after TTS to avoid echo pickup
         await new Promise(resolve => setTimeout(resolve, 300))
+        hasEverListenedRef.current = true
         start()
       }, 500)
       return () => clearTimeout(timer)
@@ -131,8 +134,9 @@ export default function SpeechRecognitionButton({
   }, [autoStart, isSupported])
 
   // Auto-restart listening if it stops without a result (for autoStart mode)
+  // Only restart if we've previously been listening (not on initial mount)
   useEffect(() => {
-    if (autoStart && isSupported && !disabled && !isListening && !hasSubmittedRef.current) {
+    if (autoStart && isSupported && !disabled && !isListening && !hasSubmittedRef.current && hasEverListenedRef.current) {
       console.log('Auto-restarting speech recognition after stop')
       // Clear any pending interim timer to avoid submitting stale results
       if (interimTimerRef.current) {
@@ -176,6 +180,7 @@ export default function SpeechRecognitionButton({
       } catch (e) {
         console.warn('onStartListening failed:', e)
       }
+      hasEverListenedRef.current = true
       start()
     }
   }
