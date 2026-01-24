@@ -12,6 +12,9 @@ interface SpeechRecognitionButtonProps {
   isCorrectAnswer?: boolean // Indicates if this is a correct answer (vs timer expired)
   onStartListening?: () => void | Promise<void> // Callback when user starts listening (can be async)
   autoStart?: boolean // Auto-start listening when component mounts
+  onListeningChange?: (isListening: boolean) => void // Callback when listening state changes
+  onNoResponse?: () => void // Callback when user doesn't respond after timeout
+  noResponseTimeout?: number // Seconds to wait before calling onNoResponse (default 60)
 }
 
 export default function SpeechRecognitionButton({
@@ -22,12 +25,15 @@ export default function SpeechRecognitionButton({
   isCorrectAnswer = false,
   onStartListening,
   autoStart = false,
+  onListeningChange,
+  onNoResponse,
+  noResponseTimeout = 60,
 }: SpeechRecognitionButtonProps) {
   const lastInterimRef = useRef<string>('')
   const lastConfidenceRef = useRef<number | undefined>(undefined)
-  const interimTimerRef = useRef<NodeJS.Timeout | null>(null)
   const hasSubmittedRef = useRef<boolean>(false)
   const hasEverListenedRef = useRef<boolean>(false) // Track if we've ever started listening
+  const noResponseTimerRef = useRef<NodeJS.Timeout | null>(null) // Overall timeout for no response
   const [isInitializing, setIsInitializing] = useState(autoStart) // Track auto-start initialization
 
   // Function to submit an answer
@@ -50,40 +56,32 @@ export default function SpeechRecognitionButton({
     useSpeechRecognition({
       continuous: true, // Keep listening until we manually stop
       onResult: (transcript, isFinal, confidence) => {
-        // Clear any pending interim timer
-        if (interimTimerRef.current) {
-          clearTimeout(interimTimerRef.current)
-          interimTimerRef.current = null
-        }
-
         // Store confidence for later use
         if (confidence !== undefined) {
           lastConfidenceRef.current = confidence
         }
 
-        if (isFinal) {
+        // Store interim results for display
+        if (transcript.trim().length >= 2) {
+          lastInterimRef.current = transcript
+        }
+
+        // Only submit on final results - no timeout auto-submit
+        // This gives users unlimited time to speak
+        if (isFinal && transcript.trim().length >= 2) {
+          // Clear the no-response timeout on successful speech
+          if (noResponseTimerRef.current) {
+            clearTimeout(noResponseTimerRef.current)
+            noResponseTimerRef.current = null
+          }
           submitAnswer(transcript, confidence)
           stop()
-        } else {
-          // For interim results, if stable for 1.5 seconds, accept it
-          // Only store interim results that are at least 2 characters (to filter out noise)
-          if (transcript.trim().length >= 2) {
-            lastInterimRef.current = transcript
-            interimTimerRef.current = setTimeout(() => {
-              // Double-check the transcript is still meaningful before submitting
-              if (lastInterimRef.current && lastInterimRef.current.trim().length >= 2 && !hasSubmittedRef.current) {
-                console.log('Accepting stable interim result:', lastInterimRef.current)
-                submitAnswer(lastInterimRef.current, lastConfidenceRef.current)
-                stop()
-              }
-            }, 1500)
-          }
         }
       },
       onError: (error) => {
         // Suppress 'no-speech' error - it's expected when user hasn't spoken yet
         if (error === 'no-speech' || error?.includes?.('no-speech')) {
-          console.log('No speech detected - user can try again')
+          console.log('No speech detected - will auto-restart')
           return
         }
         console.error('Speech recognition error:', error)
@@ -96,9 +94,10 @@ export default function SpeechRecognitionButton({
     hasEverListenedRef.current = false
     lastInterimRef.current = ''
     lastConfidenceRef.current = undefined
-    if (interimTimerRef.current) {
-      clearTimeout(interimTimerRef.current)
-      interimTimerRef.current = null
+    // Clear any pending no-response timeout
+    if (noResponseTimerRef.current) {
+      clearTimeout(noResponseTimerRef.current)
+      noResponseTimerRef.current = null
     }
     // Reset initializing state for autoStart
     if (autoStart) {
@@ -106,14 +105,19 @@ export default function SpeechRecognitionButton({
     }
   }, [resetTrigger, autoStart])
 
-  // Cleanup timer on unmount
+  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (interimTimerRef.current) {
-        clearTimeout(interimTimerRef.current)
+      if (noResponseTimerRef.current) {
+        clearTimeout(noResponseTimerRef.current)
       }
     }
   }, [])
+
+  // Notify parent when listening state changes
+  useEffect(() => {
+    onListeningChange?.(isListening)
+  }, [isListening, onListeningChange])
 
   // Auto-start listening when component mounts if autoStart is true
   useEffect(() => {
@@ -133,6 +137,19 @@ export default function SpeechRecognitionButton({
         await new Promise(resolve => setTimeout(resolve, 300))
         hasEverListenedRef.current = true
         setIsInitializing(false)
+
+        // Start the overall no-response timeout
+        if (onNoResponse && noResponseTimeout > 0) {
+          console.log(`Starting ${noResponseTimeout}s no-response timeout`)
+          noResponseTimerRef.current = setTimeout(() => {
+            if (!hasSubmittedRef.current) {
+              console.log('No response timeout reached')
+              hasSubmittedRef.current = true
+              onNoResponse()
+            }
+          }, noResponseTimeout * 1000)
+        }
+
         start()
       }, 500)
       return () => clearTimeout(timer)
@@ -141,15 +158,11 @@ export default function SpeechRecognitionButton({
   }, [autoStart, isSupported])
 
   // Auto-restart listening if it stops without a result (for autoStart mode)
-  // Only restart if we've previously been listening (not on initial mount)
+  // Restarts indefinitely until user speaks or timeout is reached
   useEffect(() => {
     if (autoStart && isSupported && !disabled && !isListening && !hasSubmittedRef.current && hasEverListenedRef.current) {
-      console.log('Auto-restarting speech recognition after stop')
-      // Clear any pending interim timer to avoid submitting stale results
-      if (interimTimerRef.current) {
-        clearTimeout(interimTimerRef.current)
-        interimTimerRef.current = null
-      }
+      console.log('Speech recognition stopped, restarting...')
+
       // Clear interim state before restarting
       lastInterimRef.current = ''
       lastConfidenceRef.current = undefined
@@ -237,12 +250,8 @@ export default function SpeechRecognitionButton({
           </button>
         </div>
       ) : isInitializing ? (
-        <div className="w-full py-8 px-12 rounded-lg text-2xl font-bold bg-gray-100 border-4 border-gray-300 mb-4" style={{ minHeight: '80px' }}>
-          <div className="flex items-center justify-center gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-600"></div>
-            <span className="text-gray-700">Starting...</span>
-          </div>
-        </div>
+        // Don't show anything while initializing - just wait for listening state
+        null
       ) : (
         <button
           type="button"

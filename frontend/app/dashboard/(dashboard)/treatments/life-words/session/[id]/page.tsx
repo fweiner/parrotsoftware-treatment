@@ -126,6 +126,7 @@ export default function LifeWordsSessionPage() {
   const [attemptCount, setAttemptCount] = useState(0)
   const [showTryAgain, setShowTryAgain] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isSpeechReady, setIsSpeechReady] = useState(false) // Track when speech recognition is listening
   // Session statistics for progress report
   const [sessionStats, setSessionStats] = useState({
     totalCorrect: 0,
@@ -218,6 +219,7 @@ export default function LifeWordsSessionPage() {
           currentContactRef.current = contacts[0]
           setAttemptCount(0)
           setShowTryAgain(false)
+          setIsSpeechReady(false)
           setIsTransitioning(true)
           setSessionPhase('testing')
           // Reset trial timer when entering testing phase
@@ -248,6 +250,7 @@ export default function LifeWordsSessionPage() {
           currentContactRef.current = contacts[0]
           setAttemptCount(0)
           setShowTryAgain(false)
+          setIsSpeechReady(false)
           setIsTransitioning(true)
           setSessionPhase('testing')
           // Reset trial timer when entering testing phase
@@ -271,6 +274,16 @@ export default function LifeWordsSessionPage() {
     const timer = setTimeout(speakAndAdvance, 800)
     return () => clearTimeout(timer)
   }, [sessionPhase, currentContact, currentIndex, contacts, loading, teachingSpoken, voiceGender])
+
+  // Track if prompt has been spoken for current image (to avoid speaking twice)
+  const hasSpokenForCurrentImageRef = useRef(false)
+
+  // Reset spoken flag when moving to new image
+  useEffect(() => {
+    if (!isSpeechReady) {
+      hasSpokenForCurrentImageRef.current = false
+    }
+  }, [isSpeechReady])
 
   const initializeSession = async () => {
     try {
@@ -460,6 +473,25 @@ export default function LifeWordsSessionPage() {
     moveToNext()
   }
 
+  // Handle no response after max speech recognition restarts
+  const handleNoResponse = async () => {
+    if (!currentContact || !session) return
+
+    // Calculate response time
+    const responseTime = (Date.now() - trialStartTimeRef.current) / 1000
+
+    // Update session stats for no response (treated as incorrect, no cues used)
+    setSessionStats(prev => ({
+      ...prev,
+      totalIncorrect: prev.totalIncorrect + 1,
+      responseTimes: [...prev.responseTimes, responseTime],
+    }))
+
+    await saveResponse(false, null, 0, responseTime)
+    // Move directly to next item without showing hints or try again
+    moveToNext()
+  }
+
   const saveResponse = async (
     isCorrect: boolean,
     userAnswer: string | null,
@@ -520,6 +552,7 @@ export default function LifeWordsSessionPage() {
     setCuesUsed(0)
     setAttemptCount(0)
     setShowTryAgain(false)
+    setIsSpeechReady(false) // Reset speech ready state for new image
     setIsAnswering(true)
     setIsProcessingAnswer(false)
     setIsWaitingForNext(false)
@@ -710,26 +743,32 @@ export default function LifeWordsSessionPage() {
 
       {currentContact && (
         <>
-          {/* Photo display - 50% smaller */}
-          <div className={`relative w-40 h-40 md:w-48 md:h-48 rounded-lg overflow-hidden shadow-lg mb-6 transition-all duration-300 ${
-            showSuccess
-              ? 'ring-8 ring-green-500'
-              : sessionPhase === 'teaching'
-              ? 'border-4 border-blue-300'
-              : 'border-4 border-gray-200'
-          }`}>
-            <Image
-              src={currentContact.photo_url}
-              alt={sessionPhase === 'teaching' ? currentContact.name : "Who is this?"}
-              fill
-              className="object-cover"
-            />
-            {showSuccess && (
-              <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
-                <span className="text-8xl">✓</span>
-              </div>
-            )}
-          </div>
+          {/* Photo display - hidden during testing/transition until speech recognition is ready */}
+          {(sessionPhase === 'teaching' || isSpeechReady || showSuccess || isWaitingForNext || showTryAgain) ? (
+            <div className={`relative w-40 h-40 md:w-48 md:h-48 rounded-lg overflow-hidden shadow-lg mb-6 transition-all duration-300 ${
+              showSuccess
+                ? 'ring-8 ring-green-500'
+                : sessionPhase === 'teaching'
+                ? 'border-4 border-blue-300'
+                : 'border-4 border-gray-200'
+            }`}>
+              <Image
+                src={currentContact.photo_url}
+                alt={sessionPhase === 'teaching' ? currentContact.name : "Who is this?"}
+                fill
+                className="object-cover"
+              />
+              {showSuccess && (
+                <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+                  <span className="text-8xl">✓</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-40 h-40 md:w-48 md:h-48 mb-6 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-[var(--color-primary)]"></div>
+            </div>
+          )}
 
           {/* Teaching phase - show the name */}
           {sessionPhase === 'teaching' ? (
@@ -746,10 +785,12 @@ export default function LifeWordsSessionPage() {
             </div>
           ) : (
             <>
-              {/* Testing phase - prompt text */}
-              <p className="text-2xl text-gray-700 mb-6 text-center">
-                {currentContact.relationship === 'item' ? 'What is this?' : 'Who is this?'}
-              </p>
+              {/* Testing phase - prompt text (hidden until speech recognition ready) */}
+              {(isSpeechReady || showSuccess || isWaitingForNext || showTryAgain) && (
+                <p className="text-2xl text-gray-700 mb-6 text-center">
+                  {currentContact.relationship === 'item' ? 'What is this?' : 'Who is this?'}
+                </p>
+              )}
 
               {isWaitingForNext && !isAnswering ? (
                 <div className="text-center">
@@ -792,24 +833,21 @@ export default function LifeWordsSessionPage() {
                   disabled={isProcessingAnswer}
                   resetTrigger={currentIndex}
                   autoStart={true}
+                  onListeningChange={(listening) => setIsSpeechReady(listening)}
+                  onNoResponse={handleNoResponse}
+                  noResponseTimeout={60}
                   onStartListening={async () => {
-                    // Always speak the prompt for the first attempt of each image
-                    // This ensures the user knows what to do and provides a delay before recognition
-                    if (attemptCount === 0) {
+                    // Speak the prompt BEFORE speech recognition starts
+                    // This prevents the microphone from picking up the TTS
+                    if (attemptCount === 0 && !hasSpokenForCurrentImageRef.current) {
+                      hasSpokenForCurrentImageRef.current = true
                       try {
-                        await waitForVoices()
                         const prompt = currentContact.relationship === 'item' ? 'What is this?' : 'Who is this?'
                         await speak(prompt, { gender: voiceGender })
-                        if (currentIndex === 0) {
-                          hasSpokenFirstPromptRef.current = true
-                          setHasSpokenFirstPrompt(true)
-                        }
-                        // Extra delay after TTS to prevent microphone from picking up echo
-                        await new Promise(resolve => setTimeout(resolve, 500))
+                        // Extra delay after TTS to ensure audio has stopped
+                        await new Promise(resolve => setTimeout(resolve, 1000))
                       } catch (error: any) {
                         console.warn('Failed to speak prompt:', error)
-                        // Still add delay even if TTS fails to avoid starting recognition too quickly
-                        await new Promise(resolve => setTimeout(resolve, 500))
                       }
                     }
                   }}
