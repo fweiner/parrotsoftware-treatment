@@ -84,7 +84,8 @@ jobs:
           SECRETS="$SECRETS,SUPABASE_SECRET_KEY=production-supabase-secret-key:latest"
           SECRETS="$SECRETS,OPENAI_API_KEY=openai-api-key:latest"
           SECRETS="$SECRETS,RESEND_API_KEY=resend-api-key:latest"
-
+          SECRETS="$SECRETS,AWS_ACCESS_KEY_ID=aws-access-key-id:latest"
+          SECRETS="$SECRETS,AWS_SECRET_ACCESS_KEY=aws-secret-access-key:latest"
           gcloud run deploy treatment-api \
             --image $REGISTRY/$GCP_PROJECT_ID/gcr.io/treatment-api:latest \
             --platform managed \
