@@ -77,6 +77,15 @@ h3 {
   outline-offset: 2px;
 }
 
+/* Fix iOS/Safari double-tap-to-zoom delay that causes 2-click requirement */
+button,
+a,
+input[type="button"],
+input[type="submit"],
+[role="button"] {
+  touch-action: manipulation;
+}
+
 /* Skip to main content link */
 .skip-link {
   position: absolute;
