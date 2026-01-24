@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { extractAnswer } from '@/lib/matching/answerMatcher'
 
@@ -28,6 +28,7 @@ export default function SpeechRecognitionButton({
   const interimTimerRef = useRef<NodeJS.Timeout | null>(null)
   const hasSubmittedRef = useRef<boolean>(false)
   const hasEverListenedRef = useRef<boolean>(false) // Track if we've ever started listening
+  const [isInitializing, setIsInitializing] = useState(autoStart) // Track auto-start initialization
 
   // Function to submit an answer
   const submitAnswer = useCallback((transcript: string, confidence?: number) => {
@@ -99,7 +100,11 @@ export default function SpeechRecognitionButton({
       clearTimeout(interimTimerRef.current)
       interimTimerRef.current = null
     }
-  }, [resetTrigger])
+    // Reset initializing state for autoStart
+    if (autoStart) {
+      setIsInitializing(true)
+    }
+  }, [resetTrigger, autoStart])
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -114,6 +119,7 @@ export default function SpeechRecognitionButton({
   useEffect(() => {
     if (autoStart && isSupported && !disabled) {
       console.log('Auto-starting speech recognition')
+      setIsInitializing(true)
       // Small delay to ensure everything is ready
       const timer = setTimeout(async () => {
         // Wait for onStartListening to complete (e.g., TTS prompt) before starting recognition
@@ -126,6 +132,7 @@ export default function SpeechRecognitionButton({
         // Add small delay after TTS to avoid echo pickup
         await new Promise(resolve => setTimeout(resolve, 300))
         hasEverListenedRef.current = true
+        setIsInitializing(false)
         start()
       }, 500)
       return () => clearTimeout(timer)
@@ -228,6 +235,13 @@ export default function SpeechRecognitionButton({
           >
             Stop Listening
           </button>
+        </div>
+      ) : isInitializing ? (
+        <div className="w-full py-8 px-12 rounded-lg text-2xl font-bold bg-gray-100 border-4 border-gray-300 mb-4" style={{ minHeight: '80px' }}>
+          <div className="flex items-center justify-center gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-600"></div>
+            <span className="text-gray-700">Starting...</span>
+          </div>
         </div>
       ) : (
         <button
