@@ -6,6 +6,7 @@ from app.models.schemas import (
     PersonalItemCreate,
     PersonalItemUpdate,
     PersonalItemResponse,
+    QuickAddItemCreate,
 )
 import traceback
 
@@ -40,6 +41,31 @@ async def create_personal_item(
                 "weight": empty_to_none(item_data.weight),
                 "location": empty_to_none(item_data.location),
                 "associated_with": empty_to_none(item_data.associated_with),
+            }
+        )
+
+        return PersonalItemResponse(**item[0])
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/quick-add")
+async def quick_add_item(
+    data: QuickAddItemCreate,
+    user_id: CurrentUserId,
+    db: Database
+) -> PersonalItemResponse:
+    """Quick add an item with just a photo - creates an incomplete draft entry."""
+    try:
+        # Create item with empty name (triggers is_complete = FALSE)
+        item = await db.insert(
+            "personal_items",
+            {
+                "user_id": user_id,
+                "name": "",  # Empty triggers is_complete = FALSE
+                "photo_url": data.photo_url,
             }
         )
 

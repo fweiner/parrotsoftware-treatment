@@ -25,11 +25,10 @@ def test_get_status_success(app, client, mock_user_id, mock_db):
     app.dependency_overrides[get_current_user_id] = override_get_current_user_id
     app.dependency_overrides[get_db] = override_get_db
 
-    # Mock DB response with 3 contacts
-    mock_db.query.return_value = [
-        {"id": "contact-1"},
-        {"id": "contact-2"},
-        {"id": "contact-3"}
+    # Mock DB response: 2 contacts + 1 item = 3 total
+    mock_db.query.side_effect = [
+        [{"id": "contact-1"}, {"id": "contact-2"}],  # contacts query
+        [{"id": "item-1"}],  # items query
     ]
 
     response = client.get(
@@ -39,7 +38,7 @@ def test_get_status_success(app, client, mock_user_id, mock_db):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["contact_count"] == 3
+    assert data["contact_count"] == 3  # 2 contacts + 1 item
     assert data["can_start_session"] is True
     assert data["min_contacts_required"] == 2
 
@@ -58,8 +57,11 @@ def test_get_status_not_enough_contacts(app, client, mock_user_id, mock_db):
     app.dependency_overrides[get_current_user_id] = override_get_current_user_id
     app.dependency_overrides[get_db] = override_get_db
 
-    # Mock DB response with only 1 contact
-    mock_db.query.return_value = [{"id": "contact-1"}]
+    # Mock DB response: 1 contact + 0 items = 1 total (not enough)
+    mock_db.query.side_effect = [
+        [{"id": "contact-1"}],  # contacts query
+        [],  # items query (empty)
+    ]
 
     response = client.get(
         "/api/life-words/status",
@@ -68,7 +70,7 @@ def test_get_status_not_enough_contacts(app, client, mock_user_id, mock_db):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["contact_count"] == 1
+    assert data["contact_count"] == 1  # 1 contact + 0 items
     assert data["can_start_session"] is False
 
 
@@ -86,7 +88,11 @@ def test_get_status_no_contacts(app, client, mock_user_id, mock_db):
     app.dependency_overrides[get_current_user_id] = override_get_current_user_id
     app.dependency_overrides[get_db] = override_get_db
 
-    mock_db.query.return_value = None
+    # Mock DB response: no contacts, no items
+    mock_db.query.side_effect = [
+        None,  # contacts query
+        None,  # items query
+    ]
 
     response = client.get(
         "/api/life-words/status",

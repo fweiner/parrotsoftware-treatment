@@ -421,7 +421,16 @@ export default function LifeWordsPage() {
             )}
 
             {/* Secondary Actions - Icon Grid */}
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+              <Link
+                href="/dashboard/treatments/life-words/quick-add"
+                title="Quickly add photos of people and things"
+                className="flex flex-col items-center justify-center p-3 rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] border-2 border-[var(--color-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-h-[90px]"
+              >
+                <span className="text-2xl mb-1">📸</span>
+                <span className="text-xs sm:text-sm font-semibold text-white text-center leading-tight">Quick Add</span>
+              </Link>
+
               <Link
                 href="/dashboard/treatments/life-words/how-it-works"
                 title="Learn how to use this feature"

@@ -6,6 +6,7 @@ from app.models.schemas import (
     PersonalContactCreate,
     PersonalContactUpdate,
     PersonalContactResponse,
+    QuickAddContactCreate,
     LifeWordsStatusResponse,
     LifeWordsSessionCreate,
     LifeWordsSessionResponse,
@@ -27,18 +28,27 @@ async def get_life_words_status(
 ) -> LifeWordsStatusResponse:
     """Get user's life words setup status."""
     try:
-        # Count active contacts
+        # Count active AND complete contacts (only complete entries can be used in sessions)
         contacts = await db.query(
             "personal_contacts",
             select="id",
-            filters={"user_id": user_id, "is_active": True}
+            filters={"user_id": user_id, "is_active": True, "is_complete": True}
+        )
+
+        # Also count active and complete items
+        items = await db.query(
+            "personal_items",
+            select="id",
+            filters={"user_id": user_id, "is_active": True, "is_complete": True}
         )
 
         contact_count = len(contacts) if contacts else 0
+        item_count = len(items) if items else 0
+        total_count = contact_count + item_count
 
         return LifeWordsStatusResponse(
-            contact_count=contact_count,
-            can_start_session=contact_count >= MIN_CONTACTS_REQUIRED,
+            contact_count=total_count,
+            can_start_session=total_count >= MIN_CONTACTS_REQUIRED,
             min_contacts_required=MIN_CONTACTS_REQUIRED
         )
 
@@ -80,6 +90,33 @@ async def create_personal_contact(
                 "personality": empty_to_none(contact_data.personality),
                 "values": empty_to_none(contact_data.values),
                 "social_behavior": empty_to_none(contact_data.social_behavior)
+            }
+        )
+
+        return PersonalContactResponse(**contact[0])
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/contacts/quick-add")
+async def quick_add_contact(
+    data: QuickAddContactCreate,
+    user_id: CurrentUserId,
+    db: Database
+) -> PersonalContactResponse:
+    """Quick add a contact with just a photo - creates an incomplete draft entry."""
+    try:
+        # Create contact with empty name/relationship (triggers is_complete = FALSE)
+        contact = await db.insert(
+            "personal_contacts",
+            {
+                "user_id": user_id,
+                "name": "",  # Empty triggers is_complete = FALSE
+                "relationship": "",  # Empty triggers is_complete = FALSE
+                "photo_url": data.photo_url,
+                "category": data.category,
             }
         )
 
@@ -236,28 +273,28 @@ async def create_life_words_session(
 ) -> Dict[str, Any]:
     """Create a new life words session including contacts and items."""
     try:
-        # Get contacts to use
+        # Get contacts to use (only complete entries)
         if session_data.contact_ids:
             # Verify specified contacts exist and belong to user
             contacts = await db.query(
                 "personal_contacts",
                 select="*",
-                filters={"user_id": user_id, "is_active": True}
+                filters={"user_id": user_id, "is_active": True, "is_complete": True}
             )
             contacts = [c for c in contacts if c["id"] in session_data.contact_ids]
         else:
-            # Use all active contacts
+            # Use all active and complete contacts
             contacts = await db.query(
                 "personal_contacts",
                 select="*",
-                filters={"user_id": user_id, "is_active": True}
+                filters={"user_id": user_id, "is_active": True, "is_complete": True}
             )
 
-        # Also get all active items from "My Stuff"
+        # Also get all active and complete items from "My Stuff"
         items = await db.query(
             "personal_items",
             select="*",
-            filters={"user_id": user_id, "is_active": True}
+            filters={"user_id": user_id, "is_active": True, "is_complete": True}
         )
 
         # Convert items to contact-like format for unified handling

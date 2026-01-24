@@ -1,16 +1,20 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { ItemCard, Item } from '@/components/life-words/ItemCard'
+import { QuickCompleteModal } from '@/components/life-words/QuickCompleteModal'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 export default function ItemsListPage() {
+  const router = useRouter()
   const [items, setItems] = useState<Item[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [quickCompleteItem, setQuickCompleteItem] = useState<Item | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -70,6 +74,46 @@ export default function ItemsListPage() {
     }
   }
 
+  const handleQuickComplete = async (data: { name: string }) => {
+    if (!quickCompleteItem) return
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      throw new Error('Please log in to continue')
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/life-words/items/${quickCompleteItem.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+        }),
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to update item')
+    }
+
+    // Reload items to get updated data
+    await loadItems()
+  }
+
+  const handleFullEdit = () => {
+    if (quickCompleteItem) {
+      router.push(`/dashboard/treatments/life-words/items/${quickCompleteItem.id}/edit`)
+    }
+  }
+
+  // Separate incomplete and complete items
+  const incompleteItems = items.filter(i => i.is_complete === false)
+  const completeItems = items.filter(i => i.is_complete !== false)
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -107,28 +151,67 @@ export default function ItemsListPage() {
           </div>
         )}
 
-        {/* Add new item button */}
-        <div className="mb-6">
+        {/* Add new item buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <Link
+            href="/dashboard/treatments/life-words/quick-add"
+            className="flex-1 py-4 px-6 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-lg rounded-lg transition-colors block text-center flex items-center justify-center gap-2"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Quick Add Photos
+          </Link>
           <Link
             href="/dashboard/treatments/life-words/items/new"
-            className="py-4 px-6 bg-blue-50 hover:bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 font-semibold text-lg transition-colors block text-center"
+            className="flex-1 py-4 px-6 bg-blue-50 hover:bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 font-semibold text-lg transition-colors block text-center"
           >
-            + Add New Item
+            + Add with Details
           </Link>
         </div>
 
-        {/* Items grid */}
-        {items.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {items.map(item => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                onDelete={handleDeleteItem}
-              />
-            ))}
+        {/* Needs Details section - incomplete items */}
+        {incompleteItems.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-semibold">
+                {incompleteItems.length} photo{incompleteItems.length !== 1 ? 's' : ''} need{incompleteItems.length === 1 ? 's' : ''} details
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {incompleteItems.map(item => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  onDelete={handleDeleteItem}
+                  onQuickComplete={setQuickCompleteItem}
+                />
+              ))}
+            </div>
           </div>
-        ) : (
+        )}
+
+        {/* Complete items section */}
+        {completeItems.length > 0 && (
+          <>
+            {incompleteItems.length > 0 && (
+              <h2 className="text-xl font-bold text-gray-700 mb-4">Ready for Practice</h2>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {completeItems.map(item => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  onDelete={handleDeleteItem}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Empty state */}
+        {items.length === 0 && (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <div className="text-6xl mb-4">📦</div>
             <p className="text-xl text-gray-600 mb-4">No items yet</p>
@@ -136,6 +219,18 @@ export default function ItemsListPage() {
           </div>
         )}
       </div>
+
+      {/* Quick Complete Modal */}
+      {quickCompleteItem && (
+        <QuickCompleteModal
+          isOpen={true}
+          onClose={() => setQuickCompleteItem(null)}
+          onSave={handleQuickComplete}
+          onFullEdit={handleFullEdit}
+          photoUrl={quickCompleteItem.photo_url}
+          type="item"
+        />
+      )}
     </div>
   )
 }

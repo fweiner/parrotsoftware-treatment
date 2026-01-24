@@ -241,8 +241,15 @@ class PersonalContactResponse(BaseModel):
     values: Optional[str] = None
     social_behavior: Optional[str] = None
     is_active: bool
+    is_complete: bool = True
     created_at: datetime
     updated_at: datetime
+
+
+class QuickAddContactCreate(BaseModel):
+    """Quick add contact - photo only, creates incomplete draft."""
+    photo_url: str
+    category: str = "family"  # 'family' for people, 'pet' for pets
 
 
 class LifeWordsStatusResponse(BaseModel):
@@ -388,8 +395,14 @@ class PersonalItemResponse(BaseModel):
     location: Optional[str] = None
     associated_with: Optional[str] = None
     is_active: bool
+    is_complete: bool = True
     created_at: datetime
     updated_at: datetime
+
+
+class QuickAddItemCreate(BaseModel):
+    """Quick add item - photo only, creates incomplete draft."""
+    photo_url: str
 
 
 # Direct Messaging Schemas
