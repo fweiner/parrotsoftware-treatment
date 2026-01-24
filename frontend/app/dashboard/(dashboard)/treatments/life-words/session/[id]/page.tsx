@@ -625,23 +625,6 @@ export default function LifeWordsSessionPage() {
               alt={sessionPhase === 'teaching' ? currentContact.name : "Who is this?"}
               fill
               className="object-cover"
-              onLoad={() => {
-                if (sessionPhase === 'testing' && currentIndex === 0 && !hasSpokenFirstPromptRef.current) {
-                  setTimeout(async () => {
-                    if (!hasSpokenFirstPromptRef.current) {
-                      try {
-                        await waitForVoices()
-                        const prompt = currentContact.relationship === 'item' ? 'What is this?' : 'Who is this?'
-                        await speak(prompt, { gender: voiceGender })
-                        hasSpokenFirstPromptRef.current = true
-                        setHasSpokenFirstPrompt(true)
-                      } catch (error: any) {
-                        console.log('TTS blocked by browser:', error?.message || error)
-                      }
-                    }
-                  }, 300)
-                }
-              }}
             />
             {showSuccess && (
               <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
@@ -712,15 +695,23 @@ export default function LifeWordsSessionPage() {
                   resetTrigger={currentIndex}
                   autoStart={true}
                   onStartListening={async () => {
-                    if (currentIndex === 0 && attemptCount === 0 && !hasSpokenFirstPromptRef.current) {
+                    // Always speak the prompt for the first attempt of each image
+                    // This ensures the user knows what to do and provides a delay before recognition
+                    if (attemptCount === 0) {
                       try {
                         await waitForVoices()
                         const prompt = currentContact.relationship === 'item' ? 'What is this?' : 'Who is this?'
                         await speak(prompt, { gender: voiceGender })
-                        hasSpokenFirstPromptRef.current = true
-                        setHasSpokenFirstPrompt(true)
+                        if (currentIndex === 0) {
+                          hasSpokenFirstPromptRef.current = true
+                          setHasSpokenFirstPrompt(true)
+                        }
+                        // Extra delay after TTS to prevent microphone from picking up echo
+                        await new Promise(resolve => setTimeout(resolve, 500))
                       } catch (error: any) {
                         console.warn('Failed to speak prompt:', error)
+                        // Still add delay even if TTS fails to avoid starting recognition too quickly
+                        await new Promise(resolve => setTimeout(resolve, 500))
                       }
                     }
                   }}
