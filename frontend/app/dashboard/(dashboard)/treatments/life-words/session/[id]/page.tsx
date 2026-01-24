@@ -116,6 +116,7 @@ export default function LifeWordsSessionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [micPermissionGranted, setMicPermissionGranted] = useState(false)
+  const [sessionStarted, setSessionStarted] = useState(false)
   const [isProcessingAnswer, setIsProcessingAnswer] = useState(false)
   const [hasSpokenFirstPrompt, setHasSpokenFirstPrompt] = useState(false)
   const [isWaitingForNext, setIsWaitingForNext] = useState(false)
@@ -159,12 +160,12 @@ export default function LifeWordsSessionPage() {
     requestMicPermission()
   }, [])
 
-  // Initialize session only after mic permission is handled
+  // Initialize session only after user clicks Start
   useEffect(() => {
-    if (micPermissionGranted) {
+    if (sessionStarted) {
       initializeSession()
     }
-  }, [micPermissionGranted])
+  }, [sessionStarted])
 
   // Handle teaching phase - speak name and auto-advance
   useEffect(() => {
@@ -544,6 +545,23 @@ export default function LifeWordsSessionPage() {
           <div className="text-6xl mb-4">🎤</div>
           <p className="text-xl text-gray-700 mb-2">Please allow microphone access</p>
           <p className="text-lg text-gray-500">This is needed for speech recognition</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!sessionStarted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">✓</div>
+          <p className="text-xl text-gray-700 mb-6">Microphone ready!</p>
+          <button
+            onClick={() => setSessionStarted(true)}
+            className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold py-4 px-8 rounded-lg text-2xl"
+          >
+            Start Session
+          </button>
         </div>
       </div>
     )
