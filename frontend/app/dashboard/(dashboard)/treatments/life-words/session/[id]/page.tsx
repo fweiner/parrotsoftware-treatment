@@ -115,6 +115,7 @@ export default function LifeWordsSessionPage() {
   const [isCompleted, setIsCompleted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [micPermissionGranted, setMicPermissionGranted] = useState(false)
   const [isProcessingAnswer, setIsProcessingAnswer] = useState(false)
   const [hasSpokenFirstPrompt, setHasSpokenFirstPrompt] = useState(false)
   const [isWaitingForNext, setIsWaitingForNext] = useState(false)
@@ -140,10 +141,30 @@ export default function LifeWordsSessionPage() {
   const hasSpokenFirstPromptRef = useRef(false)
   const isTeachingSpeakingRef = useRef(false)
 
-  // Initialize session
+  // Request microphone permission first, before loading session
   useEffect(() => {
-    initializeSession()
+    const requestMicPermission = async () => {
+      try {
+        // Request microphone access - this triggers the browser permission prompt
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        // Stop the stream immediately - we just needed the permission
+        stream.getTracks().forEach(track => track.stop())
+        setMicPermissionGranted(true)
+      } catch (err) {
+        console.error('Microphone permission denied:', err)
+        // Still allow session to proceed - the speech recognition component will handle the error
+        setMicPermissionGranted(true)
+      }
+    }
+    requestMicPermission()
   }, [])
+
+  // Initialize session only after mic permission is handled
+  useEffect(() => {
+    if (micPermissionGranted) {
+      initializeSession()
+    }
+  }, [micPermissionGranted])
 
   // Handle teaching phase - speak name and auto-advance
   useEffect(() => {
@@ -514,6 +535,18 @@ export default function LifeWordsSessionPage() {
 
   const handleDone = () => {
     router.push('/dashboard/treatments/life-words')
+  }
+
+  if (!micPermissionGranted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🎤</div>
+          <p className="text-xl text-gray-700 mb-2">Please allow microphone access</p>
+          <p className="text-lg text-gray-500">This is needed for speech recognition</p>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
