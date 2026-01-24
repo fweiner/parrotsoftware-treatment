@@ -185,10 +185,23 @@ export default function LifeWordsSessionPage() {
         // Say "This is [name]"
         // Use pronunciation if available, otherwise use name
         const spokenName = currentContact.pronunciation || currentContact.name
-        await speak(`This is ${spokenName}`, { gender: voiceGender })
+
+        // Retry speech up to 3 times if it fails
+        let speechSuccess = false
+        for (let attempt = 0; attempt < 3 && !speechSuccess; attempt++) {
+          try {
+            await speak(`This is ${spokenName}`, { gender: voiceGender })
+            speechSuccess = true
+          } catch (speechError) {
+            console.warn(`Speech attempt ${attempt + 1} failed:`, speechError)
+            if (attempt < 2) {
+              await new Promise(resolve => setTimeout(resolve, 500))
+            }
+          }
+        }
 
         // Wait a moment to let user see the photo and hear the name
-        await new Promise(resolve => setTimeout(resolve, 2500))
+        await new Promise(resolve => setTimeout(resolve, speechSuccess ? 2500 : 3000))
 
         // Move to next contact in teaching phase or switch to testing
         const nextIndex = currentIndex + 1
